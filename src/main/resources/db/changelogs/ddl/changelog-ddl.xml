@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- include all SQL files placed under the 'sql' folder.
+         Each SQL file should contain a Liquibase changeset header, e.g.
+         changeset author:id
+         This makes it easy to add new DDL SQL files: drop them here. -->
+    <includeAll path="sql" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>
