@@ -32,6 +32,12 @@ dependencies {
 	// liquibase starter for proper Spring Boot autoconfiguration
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
 	
+	// lombok for reducing boilerplate code
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	
 	// testing dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
