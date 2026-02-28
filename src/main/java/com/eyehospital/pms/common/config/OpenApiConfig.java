@@ -1,4 +1,4 @@
-package com.eyehospital.pms.patient.config;
+package com.eyehospital.pms.common.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
