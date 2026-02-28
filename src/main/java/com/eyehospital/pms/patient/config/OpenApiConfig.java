@@ -1,0 +1,28 @@
+package com.eyehospital.pms.patient.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.Contact;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Configuration class for OpenAPI/Swagger documentation
+ * Provides customized OpenAPI specification for the application
+ */
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Patient Management System API")
+                        .version("0.0.1")
+                        .description("API documentation for the Patient Management System")
+                        .contact(new Contact()
+                                .name("Eye Hospital")
+                                .email("support@eyehospital.com")
+                                .url(null)));
+    }
+}
