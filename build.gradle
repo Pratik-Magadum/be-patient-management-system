@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
 
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 	// data depedencies
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -33,7 +33,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
 	
 	// swagger/openapi dependencies
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
 	
 	// lombok for reducing boilerplate code
 	compileOnly 'org.projectlombok:lombok'

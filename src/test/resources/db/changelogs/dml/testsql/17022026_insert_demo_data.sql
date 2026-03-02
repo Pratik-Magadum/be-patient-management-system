@@ -6,6 +6,10 @@ VALUES
     ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Apollo Eye Hospital', 'apollo-eye', '123 Main Street, Mumbai', 'contact@apolloeye.com', '+91-22-12345678'),
     ('b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'City Eye Clinic', 'city-eye', '456 Park Avenue, Delhi', 'info@cityeye.com', '+91-11-87654321');
 
+-- Inactive hospital used by integration tests to verify 404 for inactive subdomains
+INSERT INTO hospitals (hospital_id, name, subdomain, address, contact_email, contact_phone, is_active)
+VALUES ('c2aade88-9c0b-4ef8-bb6d-6bb9bd380a33', 'Inactive Eye Centre', 'inactive-hospital', '789 Old Road, Chennai', 'old@inactive.com', '+91-44-00000000', false);
+
 INSERT INTO medicines (name, generic_name, category, standard_dosage)
 VALUES 
     ('Timolol Eye Drops', 'Timolol Maleate', 'Glaucoma Treatment', '0.5% - 1 drop twice daily'),
