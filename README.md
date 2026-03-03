@@ -56,10 +56,17 @@ The **Patient Management System (PMS)** backend service manages multi‑tenant h
 
 ### Principles Followed
 
+> **Priority:** **KISS** and **DRY** are the highest‑priority principles — every design decision should be evaluated against them first.
+
 | Principle | Application |
 |-----------|-------------|
+| **KISS** ⭐ | Keep implementations as simple as possible; prefer straightforward solutions over clever abstractions |
+| **DRY** ⭐ | `ApiResponse<T>` wrapper reused across all endpoints; extract shared logic into utility/base classes |
+| **YAGNI** | Do not add functionality until it is actually needed; avoid speculative features |
+| **Separation of Concerns** | Each layer (controller → service → repository) owns a single concern; cross‑cutting concerns handled via Spring AOP / filters |
+| **Avoid Premature Optimization** | Write clear, correct code first; optimize only when profiling reveals a bottleneck |
+| **Boy Scout Rule** | Leave every file cleaner than you found it — improve naming, remove dead code, add missing docs on each commit |
 | **SOLID** | Single‑responsibility services; open/closed via interfaces; Liskov‑safe impls |
-| **DRY** | `ApiResponse<T>` wrapper reused across all endpoints |
 | **Clean Code** | Meaningful names, small methods, no magic numbers |
 | **Fail Fast** | Bean Validation (`@Valid`) + `GlobalExceptionHandler` |
 | **TDD** | Tests are written **before** implementation code |
@@ -297,12 +304,24 @@ GREEN → Write the minimum code to pass the test
 REFACTOR → Clean up without breaking tests
 ```
 
+### Test Priority Rule
+
+> **Integration tests are the first priority. Unit tests are the fallback.**
+
+| Scenario | Action |
+|----------|--------|
+| Integration test exists **and covers all scenarios** | ✅ No unit test needed for that functionality — avoid duplicate coverage (DRY + KISS) |
+| Integration test is **not feasible** (e.g., complex edge‑case logic, isolated utility) | ✅ Write unit tests to cover that functionality |
+| New feature being developed | Start with an integration test; only add unit tests for logic that the integration test cannot easily exercise |
+
+**Why?** Integration tests validate the full request → response flow (controller + service + repository + DB), giving higher confidence per test. Writing both integration *and* unit tests for the same scenarios adds maintenance cost without proportional value — violating **DRY** and **KISS**.
+
 ### Test Layers
 
-| Layer | Class Pattern | Tool | Scope |
-|-------|--------------|------|-------|
-| **Unit** | `*ServiceImplTest` | JUnit 5 + Mockito | Service logic in isolation (mocked repo) |
-| **Integration** | `*IntegrationTest` | `@SpringBootTest` + Testcontainers | Full HTTP stack with real DB |
+| Layer | Priority | Class Pattern | Tool | Scope |
+|-------|----------|--------------|------|-------|
+| **Integration** | 1st (preferred) | `*IntegrationTest` | `@SpringBootTest` + Testcontainers | Full HTTP stack with real DB |
+| **Unit** | 2nd (when integration is absent) | `*ServiceImplTest` | JUnit 5 + Mockito | Service logic in isolation (mocked repo) |
 
 ### Key Annotations
 

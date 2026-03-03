@@ -1,13 +1,11 @@
 package com.eyehospital.pms.common.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 /**
- * Thrown when a requested operation violates a business rule.
- * Maps to HTTP {@code 409 CONFLICT} via {@link GlobalExceptionHandler}.
+ * Custom exception to represent business rule violations in the application.
+ *
+ * <p>When thrown, this exception will result in a 400 Bad Request response
+ * with a JSON body containing the error code and message.</p>
  */
-@ResponseStatus(HttpStatus.CONFLICT)
 public class BusinessException extends RuntimeException {
 
     private final String errorCode;

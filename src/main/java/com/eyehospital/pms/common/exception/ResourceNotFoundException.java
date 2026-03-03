@@ -1,8 +1,5 @@
 package com.eyehospital.pms.common.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 /**
  * Thrown when a requested resource cannot be found in the data store.
  * Maps to HTTP {@code 404 NOT FOUND} via {@link GlobalExceptionHandler}.
@@ -11,7 +8,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * throw new ResourceNotFoundException("Hospital", "subdomain", "apollo-eye");
  * }</pre>
  */
-@ResponseStatus(HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
 
     private final String resourceName;
