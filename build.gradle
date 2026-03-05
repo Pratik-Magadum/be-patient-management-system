@@ -19,46 +19,45 @@ repositories {
 }
 
 dependencies {
-	
+
+	// Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	// data depedencies
+	// Data
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// developer tools
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	// liquibase starter for proper Spring Boot autoconfiguration
+	// Liquibase
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
-	
-	// swagger/openapi dependencies
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
-	
-	// lombok for reducing boilerplate code
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// OpenAPI / Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-	
-	// Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // JWT
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	// Developer tools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    // Validation
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-	
-	// testing dependencies
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// Testing — starter-webmvc-test transitively includes starter-test & junit-platform-launcher
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 }
 
