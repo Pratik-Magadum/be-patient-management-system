@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.entity;
+package com.eyehospital.pms.infrastructure.security.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

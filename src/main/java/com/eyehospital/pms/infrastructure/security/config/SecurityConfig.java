@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.config;
+package com.eyehospital.pms.infrastructure.security.config;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.eyehospital.pms.security.filter.TenantContextFilter;
+import com.eyehospital.pms.infrastructure.security.filter.TenantContextFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

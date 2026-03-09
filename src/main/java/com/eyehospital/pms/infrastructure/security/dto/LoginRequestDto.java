@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.dto;
+package com.eyehospital.pms.infrastructure.security.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

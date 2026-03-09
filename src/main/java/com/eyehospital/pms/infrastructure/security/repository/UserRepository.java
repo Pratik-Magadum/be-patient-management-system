@@ -1,8 +1,9 @@
-package com.eyehospital.pms.security.repository;
+package com.eyehospital.pms.infrastructure.security.repository;
 
-import com.eyehospital.pms.security.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.eyehospital.pms.infrastructure.security.entity.User;
 
 import java.util.Optional;
 import java.util.UUID;

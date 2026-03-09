@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.service;
+package com.eyehospital.pms.infrastructure.security.service;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
-import com.eyehospital.pms.security.config.OAuth2Properties;
+import com.eyehospital.pms.infrastructure.security.config.OAuth2Properties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

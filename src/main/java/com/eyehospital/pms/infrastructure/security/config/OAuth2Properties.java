@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.config;
+package com.eyehospital.pms.infrastructure.security.config;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,7 +1,8 @@
-package com.eyehospital.pms.security.repository;
-import com.eyehospital.pms.security.entity.RefreshToken;
+package com.eyehospital.pms.infrastructure.security.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.eyehospital.pms.infrastructure.security.entity.RefreshToken;
 
 import java.util.Optional;
 import java.util.UUID;

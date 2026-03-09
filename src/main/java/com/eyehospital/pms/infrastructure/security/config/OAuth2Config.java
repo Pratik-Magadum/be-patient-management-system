@@ -1,4 +1,4 @@
-package com.eyehospital.pms.security.config;
+package com.eyehospital.pms.infrastructure.security.config;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
