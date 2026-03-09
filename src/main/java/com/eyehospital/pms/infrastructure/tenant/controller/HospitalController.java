@@ -1,7 +1,7 @@
 package com.eyehospital.pms.infrastructure.tenant.controller;
 
-import com.eyehospital.pms.common.constant.ApiConstants;
-import com.eyehospital.pms.common.response.ApiResponse;
+import com.eyehospital.pms.common.constants.ApiConstants;
+import com.eyehospital.pms.common.dto.ApiResponseDto;
 import com.eyehospital.pms.infrastructure.tenant.dto.HospitalResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -57,7 +57,7 @@ public interface HospitalController {
                     content      = @Content(schema = @Schema(hidden = true))
             )
     })
-    ResponseEntity<ApiResponse<HospitalResponseDto>> getHospitalBySubdomain(
+    ResponseEntity<ApiResponseDto<HospitalResponseDto>> getHospitalBySubdomain(
             @Parameter(description = "Unique subdomain slug of the hospital", example = "apollo-eye", required = true)
             @PathVariable String subdomain
     );

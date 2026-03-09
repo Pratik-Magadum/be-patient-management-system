@@ -1,5 +1,5 @@
 package com.eyehospital.pms.infrastructure.security.controller;
-import com.eyehospital.pms.common.response.ApiResponse;
+import com.eyehospital.pms.common.dto.ApiResponseDto;
 import com.eyehospital.pms.infrastructure.security.dto.AuthResponseDto;
 import com.eyehospital.pms.infrastructure.security.dto.LoginRequestDto;
 import com.eyehospital.pms.infrastructure.security.dto.RefreshTokenRequestDto;
@@ -23,9 +23,9 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Returns accessToken + refreshToken + expiresIn")
-    public ResponseEntity<ApiResponse<AuthResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
         AuthResponseDto response = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Login successful", response));
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK.value(), "Login successful", response));
     }
 
     /**
@@ -34,16 +34,16 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Refresh Access Token",
                description = "Exchange a valid refresh token for a new access token")
-    public ResponseEntity<ApiResponse<AuthResponseDto>> refresh(
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> refresh(
             @Valid @RequestBody RefreshTokenRequestDto request) {
         AuthResponseDto response = authService.refreshToken(request);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Token refreshed successfully", response));
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK.value(), "Token refreshed successfully", response));
     }
 
     @PostMapping("/logout")
     @Operation(summary = "Logout", description = "Revokes the refresh token")
-    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequestDto request) {
+    public ResponseEntity<ApiResponseDto<Void>> logout(@Valid @RequestBody RefreshTokenRequestDto request) {
         authService.logout(request.getRefreshToken());
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK.value(), "Logged out successfully", null));
     }
 }

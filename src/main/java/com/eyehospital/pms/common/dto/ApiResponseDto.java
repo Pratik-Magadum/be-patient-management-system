@@ -1,4 +1,4 @@
-package com.eyehospital.pms.common.response;
+package com.eyehospital.pms.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Standard API response envelope")
-public class ApiResponse<T> {
+public class ApiResponseDto<T> {
 
     @Schema(description = "HTTP status code", example = "200")
     private final int status;
@@ -42,8 +42,8 @@ public class ApiResponse<T> {
     /**
      * Creates a successful response with a payload.
      */
-    public static <T> ApiResponse<T> success(int status, String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponseDto<T> success(int status, String message, T data) {
+        return ApiResponseDto.<T>builder()
                 .status(status)
                 .message(message)
                 .data(data)
@@ -54,8 +54,8 @@ public class ApiResponse<T> {
     /**
      * Creates an error response without a payload.
      */
-    public static <T> ApiResponse<T> error(int status, String message) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponseDto<T> error(int status, String message) {
+        return ApiResponseDto.<T>builder()
                 .status(status)
                 .message(message)
                 .timestamp(LocalDateTime.now())

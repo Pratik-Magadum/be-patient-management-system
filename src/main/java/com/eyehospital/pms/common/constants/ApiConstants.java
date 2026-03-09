@@ -1,4 +1,4 @@
-package com.eyehospital.pms.common.constant;
+package com.eyehospital.pms.common.constants;
 
 /**
  * Centralized API path constants.

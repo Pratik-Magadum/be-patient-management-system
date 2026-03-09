@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.eyehospital.pms.common.response.ApiResponse;
+import com.eyehospital.pms.common.dto.ApiResponseDto;
 import com.eyehospital.pms.infrastructure.tenant.controller.HospitalController;
 import com.eyehospital.pms.infrastructure.tenant.dto.HospitalResponseDto;
 import com.eyehospital.pms.infrastructure.tenant.service.HospitalService;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>This class is intentionally thin — it only:</p>
  * <ol>
  *   <li>Delegates to {@link HospitalService} for business logic.</li>
- *   <li>Wraps the result in the standard {@link ApiResponse} envelope.</li>
+ *   <li>Wraps the result in the standard {@link ApiResponseDto} envelope.</li>
  *   <li>Returns the appropriate HTTP status code.</li>
  * </ol>
  *
@@ -37,7 +37,7 @@ public class HospitalControllerImpl implements HospitalController {
      * {@inheritDoc}
      */
     @Override
-    public ResponseEntity<ApiResponse<HospitalResponseDto>> getHospitalBySubdomain(
+    public ResponseEntity<ApiResponseDto<HospitalResponseDto>> getHospitalBySubdomain(
             @PathVariable String subdomain) {
 
         log.info("GET /hospitals/{} - fetching hospital by subdomain", subdomain);
@@ -46,7 +46,7 @@ public class HospitalControllerImpl implements HospitalController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.success(
+                .body(ApiResponseDto.success(
                         HttpStatus.OK.value(),
                         "Hospital retrieved successfully",
                         response));

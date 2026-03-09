@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.eyehospital.pms.BaseIntegrationTest;
-import com.eyehospital.pms.common.constant.ApiConstants;
+import com.eyehospital.pms.common.constants.ApiConstants;
 
 /**
  * Integration tests for the Hospital API endpoint.

@@ -1,4 +1,4 @@
-package com.eyehospital.pms.common.response;
+package com.eyehospital.pms.common.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -9,14 +9,14 @@ import java.util.List;
 
 /**
  * Pagination metadata + content wrapper for list endpoints.
- * Returned as the {@code data} field inside {@link ApiResponse} for paginated collections.
+ * Returned as the {@code data} field inside {@link ApiResponseDto} for paginated collections.
  *
  * @param <T> type of items in the page
  */
 @Getter
 @Builder
 @Schema(description = "Paginated response with metadata")
-public class PagedResponse<T> {
+public class PagedResponseDto<T> {
 
     @Schema(description = "Items in the current page")
     private final List<T> content;
@@ -39,8 +39,8 @@ public class PagedResponse<T> {
     /**
      * Builds a {@code PagedResponse} directly from a Spring {@link Page} slice.
      */
-    public static <T> PagedResponse<T> of(Page<T> page) {
-        return PagedResponse.<T>builder()
+    public static <T> PagedResponseDto<T> of(Page<T> page) {
+        return PagedResponseDto.<T>builder()
                 .content(page.getContent())
                 .page(page.getNumber())
                 .size(page.getSize())
