@@ -21,7 +21,7 @@ public class RefreshToken {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, columnDefinition = "TEXT")
     private String token;
 
     @Column(name = "expires_at", nullable = false)

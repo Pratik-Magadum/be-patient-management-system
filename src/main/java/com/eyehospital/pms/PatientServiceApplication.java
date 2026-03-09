@@ -1,14 +1,14 @@
-package com.eyehospital;
+package com.eyehospital.pms;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PatientServicekApplication {
+public class PatientServiceApplication {
 
 	public static void main(String[] args) {
 		
-		SpringApplication.run(PatientServicekApplication.class, args);
+		SpringApplication.run(PatientServiceApplication.class, args);
 	}
 
 }
