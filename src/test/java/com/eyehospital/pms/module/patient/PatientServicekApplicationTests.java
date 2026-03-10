@@ -1,4 +1,4 @@
-package com.eyehospital.pms.patient;
+package com.eyehospital.pms.module.patient;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.eyehospital.pms.TestcontainersConfiguration;
+import com.eyehospital.pms.infrastructure.TestcontainersConfiguration;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest

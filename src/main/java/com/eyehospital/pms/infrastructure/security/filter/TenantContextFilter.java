@@ -38,7 +38,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             String hospitalId = jwtAuth.getToken().getClaimAsString("hospitalId");
             if (hospitalId != null) {
                 request.setAttribute("hospitalId", hospitalId);
-                log.trace("Tenant context set: hospitalId={}", hospitalId);
+                // log.trace("Tenant context set: hospitalId={}", hospitalId);
             }
         }
 

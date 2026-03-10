@@ -1,4 +1,4 @@
-package com.eyehospital.pms;
+package com.eyehospital.pms.infrastructure;
 
 import java.util.TimeZone;
 

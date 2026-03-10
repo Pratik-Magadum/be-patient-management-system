@@ -1,22 +1,19 @@
 package com.eyehospital.pms.infrastructure.tenant;
 
 import static org.hamcrest.Matchers.containsString;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import com.eyehospital.pms.BaseIntegrationTest;
 import com.eyehospital.pms.common.constants.ApiConstants;
+import com.eyehospital.pms.infrastructure.BaseIntegrationTest;
 
 /**
  * Integration tests for the Hospital API endpoint.
@@ -34,16 +31,6 @@ import com.eyehospital.pms.common.constants.ApiConstants;
 class HospitalControllerIntegrationTest extends BaseIntegrationTest {
 
     private static final String HOSPITAL_URL = ApiConstants.HOSPITALS + "/{subdomain}";
-
-    @Autowired
-    private WebApplicationContext wac;
-
-    private MockMvc mockMvc;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-    }
 
     // -----------------------------------------------------------------------
     // GET /api/v1/hospitals/{subdomain}
