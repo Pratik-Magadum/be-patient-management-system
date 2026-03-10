@@ -32,6 +32,7 @@ class HospitalControllerIntegrationTest extends BaseIntegrationTest {
 
     private static final String HOSPITAL_URL = ApiConstants.HOSPITALS + "/{subdomain}";
 
+
     // -----------------------------------------------------------------------
     // GET /api/v1/hospitals/{subdomain}
     // -----------------------------------------------------------------------

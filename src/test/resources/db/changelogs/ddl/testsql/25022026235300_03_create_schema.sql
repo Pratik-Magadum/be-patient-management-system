@@ -251,6 +251,22 @@ CREATE INDEX idx_audit_hospital_date ON audit_logs(hospital_id, created_at DESC)
 
 COMMENT ON TABLE audit_logs IS 'Comprehensive audit trail - immutable, no updates allowed';
 
+
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    is_revoked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+
+COMMENT ON TABLE refresh_tokens IS 'Stores refresh tokens for JWT-based authentication';
+
+
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
