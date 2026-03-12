@@ -24,9 +24,10 @@ public final class ApiConstants {
     // -----------------------------------------------------------------------
     // Patient module
     // -----------------------------------------------------------------------
-    public static final String PATIENTS       = API_BASE + V1 + "/patients";
-    public static final String PATIENT_BY_ID  = "/{patientId}";
-    public static final String PATIENT_SEARCH = "/search";
+    public static final String PATIENTS              = API_BASE + V1 + "/patients";
+    public static final String PATIENT_BY_ID         = "/{patientId}";
+    public static final String PATIENT_SEARCH        = "/search";
+    public static final String PATIENT_DASHBOARD_TODAY = "/dashboard/today";
 
     // -----------------------------------------------------------------------
     // Utility

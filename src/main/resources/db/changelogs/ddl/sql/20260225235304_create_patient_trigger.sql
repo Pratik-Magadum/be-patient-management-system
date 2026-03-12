@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset owner:25022026235300_create_patient_trigger_function splitStatements:false
+--changeset owner:20260225235304_create_patient_trigger_function splitStatements:false
 --comment: Create trigger function for auto-generating patient numbers
 
 CREATE OR REPLACE FUNCTION trigger_generate_patient_number()

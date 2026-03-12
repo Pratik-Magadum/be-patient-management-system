@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset owner:25022026235300_create_patient_number_function splitStatements:false
+--changeset owner:20260225235302_create_patient_number_function splitStatements:false
 --comment: Create patient number generation function
 
 CREATE OR REPLACE FUNCTION generate_patient_number(p_hospital_id UUID)

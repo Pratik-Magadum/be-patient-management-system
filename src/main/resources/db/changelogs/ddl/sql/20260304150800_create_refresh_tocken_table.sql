@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset owner-pratik:04032026150800_create_refresh_tokens
+--changeset owner-pratik:20260304150800_create_refresh_tokens
 --comment: Create refresh_tokens table for JWT refresh token storage
 
 CREATE TABLE refresh_tokens (

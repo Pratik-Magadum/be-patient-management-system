@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset owner:25022026235300_create_schema
+--changeset owner:20260225235303_create_schema
 --comment: Create schema (DDL)
 
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
