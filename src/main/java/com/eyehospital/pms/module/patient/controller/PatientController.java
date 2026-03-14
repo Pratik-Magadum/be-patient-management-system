@@ -1,11 +1,9 @@
 package com.eyehospital.pms.module.patient.controller;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
-import com.eyehospital.pms.common.dto.ApiResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +32,7 @@ public interface PatientController {
      * and completed appointments. Accessible by all roles.</p>
      *
      * @param request the HTTP request (used to extract hospitalId from JWT)
-     * @return dashboard statistics wrapped in {@link ApiResponseDto}
+     * @return dashboard statistics
      */
     @GetMapping(ApiConstants.PATIENT_DASHBOARD_TODAY)
     @Operation(
@@ -59,5 +57,5 @@ public interface PatientController {
                     content      = @Content(schema = @Schema(hidden = true))
             )
     })
-    ResponseEntity<ApiResponseDto<PatientDashboardResponseDto>> getTodayDashboard(HttpServletRequest request);
+    PatientDashboardResponseDto getTodayDashboard(HttpServletRequest request);
 }
