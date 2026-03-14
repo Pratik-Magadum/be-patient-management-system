@@ -38,8 +38,14 @@ public class TenantContextFilter extends OncePerRequestFilter {
             String hospitalId = jwtAuth.getToken().getClaimAsString("hospitalId");
             if (hospitalId != null) {
                 request.setAttribute("hospitalId", hospitalId);
-                // log.trace("Tenant context set: hospitalId={}", hospitalId);
+                log.debug("TenantContextFilter - hospitalId={} set for URI={}", hospitalId, request.getRequestURI());
+            } else {
+                log.warn("TenantContextFilter - JWT present but hospitalId claim is null for URI={}", request.getRequestURI());
             }
+        } else {
+            log.debug("TenantContextFilter - No JwtAuthenticationToken found, authType={}, URI={}",
+                    authentication != null ? authentication.getClass().getSimpleName() : "null",
+                    request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);

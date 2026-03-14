@@ -48,9 +48,6 @@ public class PatientServiceImpl implements PatientService {
 
         long totalRegisteredPatients = patientRepository.countByHospitalId(hospitalId);
 
-        log.debug("Dashboard stats - total:{}, new:{}, followUp:{}, completed:{}, registered:{}",
-                totalPatients, newPatients, followUpPatients, completedPatients, totalRegisteredPatients);
-
         return PatientDashboardResponseDto.builder()
                 .date(today)
                 .totalPatients(totalPatients)
