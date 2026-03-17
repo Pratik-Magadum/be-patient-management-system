@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.eyehospital.pms.infrastructure.BaseIntegrationTest;
+import com.eyehospital.pms.BaseIntegrationTest;
 import com.eyehospital.pms.infrastructure.security.entity.RefreshToken;
 import com.eyehospital.pms.infrastructure.security.entity.User;
 import com.eyehospital.pms.infrastructure.security.repository.RefreshTokenRepository;

@@ -1,4 +1,4 @@
-package com.eyehospital.pms.infrastructure;
+package com.eyehospital.pms;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
