@@ -1,4 +1,13 @@
 package com.eyehospital.pms.infrastructure.security.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import static com.eyehospital.pms.common.constants.ApiConstants.AUTH;
 import com.eyehospital.pms.common.dto.ApiResponseDto;
 import com.eyehospital.pms.infrastructure.security.dto.AuthResponseDto;
 import com.eyehospital.pms.infrastructure.security.dto.LoginRequestDto;
@@ -9,12 +18,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(AUTH)
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Login, Refresh Token, Logout")
 public class AuthController {

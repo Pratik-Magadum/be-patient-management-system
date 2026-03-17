@@ -1,7 +1,10 @@
 package com.eyehospital.pms.infrastructure.security.config;
 
+import static com.eyehospital.pms.common.constants.ApiConstants.*;
+
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,11 +30,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Security configuration using Spring OAuth2 Resource Server for JWT validation.
- * <p>
- * The application acts as both the authorization server (issues tokens in AuthController)
- * and the resource server (validates Bearer tokens on every request). Both responsibilities
- * share the same RSA key pair defined in {@link OAuth2Config}.
+ * Spring Security configuration — stateless JWT-based authentication with
+ * OAuth2 Resource Server, CORS, and role-based access control.
  */
 @Configuration
 @EnableWebSecurity
@@ -39,7 +39,25 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String WILDCARD = "/**";
+
+    // Swagger / OpenAPI endpoints
+    private static final String[] SWAGGER_ENDPOINTS = {
+            "/swagger-ui/**", "/swagger-ui.html",
+            "/v3/api-docs/**", "/v3/api-docs.yaml",
+            "/swagger-resources/**", "/webjars/**"
+    };
+
+    // Role constants
+    private static final String ROLE_ADMIN        = "ADMIN";
+    private static final String ROLE_RECEPTIONIST = "RECEPTIONIST";
+    private static final String ROLE_DOCTOR       = "DOCTOR";
+    private static final String ROLE_ASSISTANT    = "ASSISTANT";
+
     private final TenantContextFilter tenantContextFilter;
+
+    @Value("${app.cors.allowed-origin-patterns}")
+    private List<String> allowedOriginPatterns;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
@@ -49,25 +67,20 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/hospitals/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, AUTH_LOGIN, AUTH_REFRESH, AUTH_LOGOUT).permitAll()
+                        .requestMatchers(HttpMethod.GET, HOSPITALS + WILDCARD).permitAll()
                         // Swagger / OpenAPI endpoints
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
+                        .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
 
                         // Role-based access aligned with project's roles (README §10)
-                        .requestMatchers("/api/v1/patients/**").hasAnyRole("ADMIN", "RECEPTIONIST", "DOCTOR", "ASSISTANT")
-                        .requestMatchers("/api/v1/appointments/**").hasAnyRole("ADMIN", "RECEPTIONIST", "DOCTOR")
-                        .requestMatchers("/api/v1/consultations/**").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers("/api/v1/diagnostics/**").hasAnyRole("ADMIN", "ASSISTANT", "DOCTOR")
+                        .requestMatchers(PATIENTS + WILDCARD)
+                            .hasAnyRole(ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_ASSISTANT)
+                        .requestMatchers(APPOINTMENTS + WILDCARD)
+                            .hasAnyRole(ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_DOCTOR)
+                        .requestMatchers(CONSULTATIONS + WILDCARD)
+                            .hasAnyRole(ROLE_ADMIN, ROLE_DOCTOR)
+                        .requestMatchers(DIAGNOSTICS + WILDCARD)
+                            .hasAnyRole(ROLE_ADMIN, ROLE_ASSISTANT, ROLE_DOCTOR)
 
                         .anyRequest().authenticated()
                 )
@@ -99,10 +112,7 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             String role = jwt.getClaimAsString("role");
-            if (role == null) {
-                return List.of();
-            }
-            return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            return role == null ? List.of() : List.of(new SimpleGrantedAuthority("ROLE_" + role));
         });
         return converter;
     }
@@ -114,12 +124,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173"              // local frontend dev
-            ,"http://*-localhost:5173"            // tenant subdomain local dev
-            ,"https://app.eyehospital.com"       // production frontend
-            ,"https://*.eyehospital.com"          // tenant subdomain production
-        ));
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Hospital-Id"));
         config.setAllowCredentials(true);

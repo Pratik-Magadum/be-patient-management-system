@@ -22,12 +22,35 @@ public final class ApiConstants {
     public static final String HOSPITAL_BY_SUBDOMAIN = "/{subdomain}";
 
     // -----------------------------------------------------------------------
+    // Auth module
+    // -----------------------------------------------------------------------
+    public static final String AUTH                  = API_BASE + V1 + "/auth";
+    public static final String AUTH_LOGIN            = AUTH + "/login";
+    public static final String AUTH_REFRESH          = AUTH + "/refresh";
+    public static final String AUTH_LOGOUT           = AUTH + "/logout";
+
+    // -----------------------------------------------------------------------
     // Patient module
     // -----------------------------------------------------------------------
     public static final String PATIENTS              = API_BASE + V1 + "/patients";
     public static final String PATIENT_BY_ID         = "/{patientId}";
     public static final String PATIENT_SEARCH        = "/search";
     public static final String PATIENT_DASHBOARD_TODAY = "/dashboard/today";
+
+    // -----------------------------------------------------------------------
+    // Appointment module
+    // -----------------------------------------------------------------------
+    public static final String APPOINTMENTS          = API_BASE + V1 + "/appointments";
+
+    // -----------------------------------------------------------------------
+    // Consultation module
+    // -----------------------------------------------------------------------
+    public static final String CONSULTATIONS         = API_BASE + V1 + "/consultations";
+
+    // -----------------------------------------------------------------------
+    // Diagnostic module
+    // -----------------------------------------------------------------------
+    public static final String DIAGNOSTICS           = API_BASE + V1 + "/diagnostics";
 
     // -----------------------------------------------------------------------
     // Utility
