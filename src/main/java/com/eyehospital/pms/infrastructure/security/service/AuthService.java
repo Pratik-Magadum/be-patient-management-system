@@ -1,5 +1,11 @@
 package com.eyehospital.pms.infrastructure.security.service;
 
+import java.time.Instant;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.common.exception.ResourceNotFoundException;
 import com.eyehospital.pms.infrastructure.security.dto.AuthResponseDto;
@@ -12,12 +18,6 @@ import com.eyehospital.pms.infrastructure.security.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Slf4j
 @Service
@@ -35,7 +35,8 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDto login(LoginRequestDto request) {
-        User user = userRepository.findByUsernameAndActiveTrue(request.getUsername())
+        User user = userRepository.findByHospitalIdAndUsernameAndActiveTrue(
+                        request.getHospitalId(), request.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", request.getUsername()));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -86,9 +87,9 @@ public class AuthService {
             throw new BusinessException("REFRESH_TOKEN_EXPIRED", "Refresh token expired. Please login again.");
         }
 
-        String username = jwtService.extractUsername(request.getRefreshToken());
-        User user = userRepository.findByUsernameAndActiveTrue(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+        User user = userRepository.findById(storedToken.getUserId())
+                .filter(User::isActive)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", storedToken.getUserId().toString()));
 
         String newAccessToken = jwtService.generateAccessToken(
                 user.getUserId(), user.getUsername(), user.getHospitalId(), user.getRole());

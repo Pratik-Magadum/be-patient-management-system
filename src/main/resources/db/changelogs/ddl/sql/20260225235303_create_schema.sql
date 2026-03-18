@@ -34,7 +34,7 @@ COMMENT ON COLUMN hospitals.updated_at IS 'Auto-updated on any modification, NUL
 CREATE TABLE users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hospital_id UUID NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
-    username VARCHAR(100) UNIQUE NOT NULL,
+    username VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
     full_name VARCHAR(200) NOT NULL,
     email VARCHAR(50) UNIQUE NOT NULL,
@@ -43,8 +43,9 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP NULL  
 );
+ALTER TABLE users ADD CONSTRAINT uq_users_hospital_username UNIQUE (hospital_id, username);
 CREATE INDEX idx_users_hospital_id ON users(hospital_id);
-CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_username ON users(hospital_id, username);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(hospital_id, role);
 CREATE INDEX idx_users_active ON users(hospital_id, is_active) WHERE is_active = TRUE;

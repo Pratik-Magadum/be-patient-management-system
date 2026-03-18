@@ -13,8 +13,7 @@ BEGIN
     
     SELECT COUNT(*) + 1 INTO v_count
     FROM patients
-    WHERE hospital_id = p_hospital_id
-    AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW());
+    WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW());
     
     v_patient_number := 'PT-' || v_year || '-' || LPAD(v_count::TEXT, 5, '0');
     

@@ -75,9 +75,13 @@ class AuthControllerTest extends BaseIntegrationTest {
     // -----------------------------------------------------------------------
 
     private String loginRequestJson(String username, String password) {
+        return loginRequestJson(username, password, HOSPITAL_ID);
+    }
+
+    private String loginRequestJson(String username, String password, UUID hospitalId) {
         return """
-                {"username": "%s", "password": "%s"}
-                """.formatted(username, password);
+                {"hospitalId": "%s", "username": "%s", "password": "%s"}
+                """.formatted(hospitalId, username, password);
     }
 
     private String refreshTokenRequestJson(String refreshToken) {
@@ -256,6 +260,63 @@ class AuthControllerTest extends BaseIntegrationTest {
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.data.role").value(role));
             }
+        }
+
+        @Test
+        @DisplayName("same username at different hospitals can both login")
+        void login_SameUsernameDifferentHospitals_BothSucceed() throws Exception {
+            UUID otherHospitalId = UUID.fromString("b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22");
+            User otherUser = new User();
+            otherUser.setHospitalId(otherHospitalId);
+            otherUser.setUsername(TEST_USERNAME); // same username as testUser
+            otherUser.setPassword(passwordEncoder.encode("OtherP@ss456"));
+            otherUser.setFullName("Other Admin");
+            otherUser.setEmail("sameuser_" + UUID.randomUUID().toString().substring(0, 8) + "@test.com");
+            otherUser.setRole("DOCTOR");
+            otherUser.setActive(true);
+            userRepository.saveAndFlush(otherUser);
+
+            // Login with hospital A
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginRequestJson(TEST_USERNAME, TEST_PASSWORD, HOSPITAL_ID)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.hospitalId").value(HOSPITAL_ID.toString()))
+                    .andExpect(jsonPath("$.data.role").value("ADMIN"));
+
+            // Login with hospital B (same username, different password and hospital)
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginRequestJson(TEST_USERNAME, "OtherP@ss456", otherHospitalId)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.hospitalId").value(otherHospitalId.toString()))
+                    .andExpect(jsonPath("$.data.role").value("DOCTOR"));
+        }
+
+        @Test
+        @DisplayName("returns 404 when hospitalId does not match any user")
+        void login_WrongHospitalId_Returns404() throws Exception {
+            UUID wrongHospitalId = UUID.fromString("c2ffdd99-9c0b-4ef8-bb6d-6bb9bd380a33");
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginRequestJson(TEST_USERNAME, TEST_PASSWORD, wrongHospitalId)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message", containsString("not found")));
+        }
+
+        @Test
+        @DisplayName("returns 400 when hospitalId is missing")
+        void login_MissingHospitalId_Returns400() throws Exception {
+            String json = """
+                    {"username": "%s", "password": "%s"}
+                    """.formatted(TEST_USERNAME, TEST_PASSWORD);
+
+            mockMvc.perform(post(LOGIN_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message", containsString("Hospital ID is required")));
         }
     }
 
@@ -635,7 +696,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(loginRequestJson("otherhospitaladmin", "pass123")))
+                            .content(loginRequestJson("otherhospitaladmin", "pass123", otherHospitalId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.hospitalId").value(otherHospitalId.toString()));
         }
