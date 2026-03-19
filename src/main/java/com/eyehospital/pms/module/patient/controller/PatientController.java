@@ -1,10 +1,14 @@
 package com.eyehospital.pms.module.patient.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -58,4 +62,44 @@ public interface PatientController {
             )
     })
     PatientDashboardResponseDto getTodayDashboard(HttpServletRequest request);
+
+    /**
+     * Searches patients by criteria in the request DTO.
+     *
+     * <p>If no criteria are provided (null or empty DTO), returns today's patients.
+     * When {@code fromDate} equals {@code toDate}, fetches for that single date.
+     * {@code fromDate} must be equal to or before {@code toDate}.</p>
+     *
+     * @param searchRequest search criteria (all fields optional)
+     * @param request       the HTTP request (used to extract hospitalId from JWT)
+     * @return list of matching patient–appointment records (empty list if none found)
+     */
+    @GetMapping(ApiConstants.PATIENT_SEARCH)
+    @Operation(
+            summary     = "Get patients",
+            description = "Searches patients by name, phone number, or date range. "
+                        + "If no criteria are provided, returns today's patients. "
+                        + "fromDate must be equal to or before toDate. "
+                        + "Returns patient name, mobile number, visit type, appointment time, and appointment status."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Patients retrieved successfully",
+                    content      = @Content(schema = @Schema(implementation = PatientSearchResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description  = "Invalid search parameters (e.g. fromDate after toDate, or only one date provided)",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized — missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    List<PatientSearchResponseDto> getPatients(
+            PatientSearchRequestDto searchRequest,
+            HttpServletRequest request);
 }

@@ -1,13 +1,17 @@
 package com.eyehospital.pms.module.patient.serviceImpl;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 import com.eyehospital.pms.module.patient.repository.PatientRepository;
 import com.eyehospital.pms.module.patient.service.PatientService;
 
@@ -55,6 +59,59 @@ public class PatientServiceImpl implements PatientService {
                 .followUpPatients(followUpPatients)
                 .completedPatients(completedPatients)
                 .totalRegisteredPatients(totalRegisteredPatients)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientSearchResponseDto> getPatients(UUID hospitalId, PatientSearchRequestDto request) {
+
+        // Default to today's patients when request is null or empty
+        if (request == null || request.isEmpty()) {
+            LocalDate today = LocalDate.now();
+            log.debug("No search criteria provided — returning today's patients for hospitalId={}", hospitalId);
+            List<Appointment> appointments = appointmentRepository.searchAppointments(
+                    hospitalId, null, null, today, null, null);
+            return appointments.stream().map(this::toSearchResponseDto).toList();
+        }
+
+        String name = (request.getName() != null && !request.getName().isBlank())
+                ? request.getName().trim() : null;
+        String phone = (request.getPhone() != null && !request.getPhone().isBlank())
+                ? request.getPhone().trim() : null;
+        LocalDate fromDate = request.getFromDate();
+        LocalDate toDate = request.getToDate();
+
+        // When both dates are provided and are equal, treat as single-date search
+        LocalDate singleDate = null;
+        if (fromDate != null && toDate != null && fromDate.isEqual(toDate)) {
+            singleDate = fromDate;
+            fromDate = null;
+            toDate = null;
+        }
+
+        log.debug("Searching patients for hospitalId={} name={} phone={} date={} fromDate={} toDate={}",
+                hospitalId, name, phone, singleDate, fromDate, toDate);
+
+        List<Appointment> appointments = appointmentRepository.searchAppointments(
+                hospitalId, name, phone, singleDate, fromDate, toDate);
+
+        return appointments.stream()
+                .map(this::toSearchResponseDto)
+                .toList();
+    }
+
+    // -----------------------------------------------------------------------
+    // Private mapping helpers
+    // -----------------------------------------------------------------------
+
+    private PatientSearchResponseDto toSearchResponseDto(Appointment appointment) {
+        return PatientSearchResponseDto.builder()
+                .patientName(appointment.getPatient().getFullName())
+                .mobileNumber(appointment.getPatient().getMobileNumber())
+                .visitType(appointment.getVisitType())
+                .appointmentTime(appointment.getAppointmentTime())
+                .appointmentStatus(appointment.getStatus())
                 .build();
     }
 }
