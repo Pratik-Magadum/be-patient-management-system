@@ -39,12 +39,7 @@ public class PatientControllerImpl implements PatientController {
     @Override
     public PatientDashboardResponseDto getTodayDashboard(HttpServletRequest request) {
 
-        String hospitalIdStr = (String) request.getAttribute("hospitalId");
-        if (hospitalIdStr == null) {
-            log.warn("GET /patients/dashboard/today - hospitalId not found in request attributes");
-            throw new BusinessException("MISSING_HOSPITAL_CONTEXT", "Hospital context not found — invalid or missing JWT token");
-        }
-        UUID hospitalId = UUID.fromString(hospitalIdStr);
+        UUID hospitalId = extractHospitalId(request);
 
         log.info("GET /patients/dashboard/today - fetching dashboard for hospitalId={}", hospitalId);
 
