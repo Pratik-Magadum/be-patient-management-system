@@ -4,11 +4,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
+import com.eyehospital.pms.module.appointment.repository.AppointmentSpecification;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -66,35 +68,43 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public List<PatientSearchResponseDto> getPatients(UUID hospitalId, PatientSearchRequestDto request) {
 
+        Specification<Appointment> spec = Specification
+                .where(AppointmentSpecification.hasHospitalId(hospitalId));
+
         // Default to today's patients when request is null or empty
         if (request == null || request.isEmpty()) {
             LocalDate today = LocalDate.now();
             log.debug("No search criteria provided — returning today's patients for hospitalId={}", hospitalId);
-            List<Appointment> appointments = appointmentRepository.searchAppointments(
-                    hospitalId, null, null, today, null, null);
-            return appointments.stream().map(this::toSearchResponseDto).toList();
+            spec = spec.and(AppointmentSpecification.onDate(today));
+        } else {
+            String name = (request.getName() != null && !request.getName().isBlank())
+                    ? request.getName().trim() : null;
+            String phone = (request.getPhone() != null && !request.getPhone().isBlank())
+                    ? request.getPhone().trim() : null;
+            LocalDate fromDate = request.getFromDate();
+            LocalDate toDate = request.getToDate();
+
+            if (name != null) {
+                spec = spec.and(AppointmentSpecification.patientNameContains(name));
+            }
+            if (phone != null) {
+                spec = spec.and(AppointmentSpecification.patientPhoneContains(phone));
+            }
+
+            // When both dates are equal, treat as single-date search
+            if (fromDate != null && toDate != null && fromDate.isEqual(toDate)) {
+                spec = spec.and(AppointmentSpecification.onDate(fromDate));
+            } else if (fromDate != null && toDate != null) {
+                spec = spec.and(AppointmentSpecification.betweenDates(fromDate, toDate));
+            }
+
+            log.debug("Searching patients for hospitalId={} name={} phone={} fromDate={} toDate={}",
+                    hospitalId, name, phone, fromDate, toDate);
         }
 
-        String name = (request.getName() != null && !request.getName().isBlank())
-                ? request.getName().trim() : null;
-        String phone = (request.getPhone() != null && !request.getPhone().isBlank())
-                ? request.getPhone().trim() : null;
-        LocalDate fromDate = request.getFromDate();
-        LocalDate toDate = request.getToDate();
+        spec = spec.and(AppointmentSpecification.orderByDateAndTimeDesc());
 
-        // When both dates are provided and are equal, treat as single-date search
-        LocalDate singleDate = null;
-        if (fromDate != null && toDate != null && fromDate.isEqual(toDate)) {
-            singleDate = fromDate;
-            fromDate = null;
-            toDate = null;
-        }
-
-        log.debug("Searching patients for hospitalId={} name={} phone={} date={} fromDate={} toDate={}",
-                hospitalId, name, phone, singleDate, fromDate, toDate);
-
-        List<Appointment> appointments = appointmentRepository.searchAppointments(
-                hospitalId, name, phone, singleDate, fromDate, toDate);
+        List<Appointment> appointments = appointmentRepository.findAll(spec);
 
         return appointments.stream()
                 .map(this::toSearchResponseDto)

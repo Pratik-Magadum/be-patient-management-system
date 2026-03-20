@@ -2,6 +2,9 @@ package com.eyehospital.pms.module.patient.dto;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +23,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Patient search criteria — all fields are optional")
 public class PatientSearchRequestDto {
 
@@ -40,6 +44,7 @@ public class PatientSearchRequestDto {
     /**
      * Returns {@code true} if no meaningful search criterion has been set.
      */
+    @JsonIgnore
     public boolean isEmpty() {
         return (name == null || name.isBlank())
                 && (phone == null || phone.isBlank())
