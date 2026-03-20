@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.appointment.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.patient.entity.Patient;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 
 public final class AppointmentSpecification {
@@ -47,6 +49,23 @@ public final class AppointmentSpecification {
             query.orderBy(
                     cb.desc(root.get("appointmentDate")),
                     cb.desc(root.get("appointmentTime")));
+            return cb.conjunction();
+        };
+    }
+
+    public static Specification<Appointment> orderByStatusThenDateTimeAsc() {
+        return (root, query, cb) -> {
+            // REGISTERED=0, IN_PROGRESS=1, COMPLETED=2
+            Expression<Integer> statusOrder = cb.<Integer>selectCase()
+                    .when(cb.equal(root.get("status"), "REGISTERED"), 0)
+                    .when(cb.equal(root.get("status"), "IN_PROGRESS"), 1)
+                    .when(cb.equal(root.get("status"), "COMPLETED"), 2)
+                    .otherwise(3);
+
+            query.orderBy(List.of(
+                    cb.asc(statusOrder),
+                    cb.asc(root.get("appointmentDate")),
+                    cb.asc(root.get("appointmentTime"))));
             return cb.conjunction();
         };
     }

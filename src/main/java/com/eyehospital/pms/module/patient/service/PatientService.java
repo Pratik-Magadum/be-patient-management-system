@@ -1,11 +1,10 @@
 package com.eyehospital.pms.module.patient.service;
 
-import java.util.List;
 import java.util.UUID;
 
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
-import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 /**
  * Contract for patient operations.
@@ -32,7 +31,7 @@ public interface PatientService {
      *
      * @param hospitalId the tenant hospital identifier
      * @param request    search criteria (nullable – defaults to today)
-     * @return list of matching patient–appointment records (empty list if none found)
+     * @return search results with summary counts and matching patient–appointment records
      */
-    List<PatientSearchResponseDto> getPatients(UUID hospitalId, PatientSearchRequestDto request);
+    PatientSearchListResponseDto getPatients(UUID hospitalId, PatientSearchRequestDto request);
 }

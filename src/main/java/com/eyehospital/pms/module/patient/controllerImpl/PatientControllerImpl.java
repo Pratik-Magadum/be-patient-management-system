@@ -1,6 +1,5 @@
 package com.eyehospital.pms.module.patient.controllerImpl;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -8,8 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.module.patient.controller.PatientController;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
-import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 import com.eyehospital.pms.module.patient.service.PatientService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,7 +46,7 @@ public class PatientControllerImpl implements PatientController {
     }
 
     @Override
-    public List<PatientSearchResponseDto> getPatients(
+    public PatientSearchListResponseDto getPatients(
             PatientSearchRequestDto searchRequest, HttpServletRequest request) {
 
         UUID hospitalId = extractHospitalId(request);

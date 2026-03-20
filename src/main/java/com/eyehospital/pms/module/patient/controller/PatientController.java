@@ -1,14 +1,12 @@
 package com.eyehospital.pms.module.patient.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
-import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -86,7 +84,7 @@ public interface PatientController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
                     description  = "Patients retrieved successfully",
-                    content      = @Content(schema = @Schema(implementation = PatientSearchResponseDto.class))
+                    content      = @Content(schema = @Schema(implementation = PatientSearchListResponseDto.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
@@ -99,7 +97,7 @@ public interface PatientController {
                     content      = @Content(schema = @Schema(hidden = true))
             )
     })
-    List<PatientSearchResponseDto> getPatients(
+    PatientSearchListResponseDto getPatients(
             PatientSearchRequestDto searchRequest,
             HttpServletRequest request);
 }

@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.eyehospital.pms.BaseIntegrationTest;
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.infrastructure.tenant.entity.Hospital;
@@ -113,8 +114,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Today Patient"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Today Patient"));
         }
 
         @Test
@@ -129,8 +130,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Today Empty"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Today Empty"));
         }
 
         @Test
@@ -143,7 +144,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.patients.length()").value(0));
         }
     }
 
@@ -210,12 +211,13 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].patientName").exists())
-                    .andExpect(jsonPath("$[0].mobileNumber").exists())
-                    .andExpect(jsonPath("$[0].visitType").exists())
-                    .andExpect(jsonPath("$[0].appointmentTime").exists())
-                    .andExpect(jsonPath("$[0].appointmentStatus").exists());
+                    .andExpect(jsonPath("$.patients.length()").value(2))
+                    .andExpect(jsonPath("$.patients[0].patientName").exists())
+                    .andExpect(jsonPath("$.patients[0].mobileNumber").exists())
+                    .andExpect(jsonPath("$.patients[0].visitType").exists())
+                    .andExpect(jsonPath("$.patients[0].appointmentTime").exists())
+                    .andExpect(jsonPath("$.patients[0].appointmentStatus").exists())
+                    .andExpect(jsonPath("$.patients[0].appointmentDate").exists());
         }
 
         @Test
@@ -229,8 +231,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Rajesh Kumar"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Rajesh Kumar"));
         }
 
         @Test
@@ -244,8 +246,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.patients").isArray())
+                    .andExpect(jsonPath("$.patients.length()").value(0));
         }
     }
 
@@ -268,9 +270,9 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Phone Patient"))
-                    .andExpect(jsonPath("$[0].mobileNumber").value("+91-8000000001"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Phone Patient"))
+                    .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-8000000001"));
         }
 
         @Test
@@ -281,7 +283,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(0));
+                    .andExpect(jsonPath("$.patients.length()").value(0));
         }
     }
 
@@ -311,7 +313,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2));
+                    .andExpect(jsonPath("$.patients.length()").value(2));
         }
 
         @Test
@@ -331,8 +333,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Same Day Patient"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Same Day Patient"));
         }
 
         @Test
@@ -348,8 +350,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Specific Date Patient"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Specific Date Patient"));
         }
     }
 
@@ -378,8 +380,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].patientName").value("Rajesh Today"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Rajesh Today"));
         }
     }
 
@@ -428,8 +430,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].mobileNumber").value("+91-4000000001"));
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-4000000001"));
         }
     }
 
@@ -442,27 +444,30 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     class SearchResponseFormat {
 
         @Test
-        @DisplayName("response is a plain JSON array (no ApiResponseDto envelope)")
-        void getPatients_ValidRequest_ReturnsPlainArray() throws Exception {
-            Patient p = createPatient("Format Patient", "+91-3000000001");
-            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+        @DisplayName("response contains summary counts and patients array")
+        void getPatients_ValidRequest_ReturnsWrapperWithCounts() throws Exception {
+            Patient p1 = createPatient("Format Patient 1", "+91-3000000001");
+            Patient p2 = createPatient("Format Patient 2", "+91-3000000002");
+            Patient p3 = createPatient("Format Patient 3", "+91-3000000003");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(10, 0));
+            createAppointment(p3, "NEW_VISIT", "IN_PROGRESS", LocalDate.now(), LocalTime.of(11, 0));
 
             mockMvc.perform(get(SEARCH_URL)
                             .param("name", "Format")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    // No ApiResponseDto envelope fields
-                    .andExpect(jsonPath("$.status").doesNotExist())
-                    .andExpect(jsonPath("$.message").doesNotExist())
-                    .andExpect(jsonPath("$.data").doesNotExist())
-                    .andExpect(jsonPath("$.timestamp").doesNotExist());
+                    .andExpect(jsonPath("$.totalPatients").value(3))
+                    .andExpect(jsonPath("$.newPatients").value(3))
+                    .andExpect(jsonPath("$.followUpPatients").value(0))
+                    .andExpect(jsonPath("$.completedPatients").value(1))
+                    .andExpect(jsonPath("$.patients").isArray())
+                    .andExpect(jsonPath("$.patients.length()").value(3));
         }
 
         @Test
-        @DisplayName("each result has patientName, mobileNumber, visitType, appointmentTime, appointmentStatus")
+        @DisplayName("each result has patientName, mobileNumber, visitType, appointmentDate, appointmentTime, appointmentStatus")
         void getPatients_ValidRequest_ResultContainsAllFields() throws Exception {
             Patient p = createPatient("Fields Patient", "+91-3100000001");
             createAppointment(p, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(14, 30));
@@ -472,11 +477,12 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].patientName").value("Fields Patient"))
-                    .andExpect(jsonPath("$[0].mobileNumber").value("+91-3100000001"))
-                    .andExpect(jsonPath("$[0].visitType").value("NEW_VISIT"))
-                    .andExpect(jsonPath("$[0].appointmentTime").exists())
-                    .andExpect(jsonPath("$[0].appointmentStatus").value("COMPLETED"));
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Fields Patient"))
+                    .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-3100000001"))
+                    .andExpect(jsonPath("$.patients[0].visitType").value("NEW_VISIT"))
+                    .andExpect(jsonPath("$.patients[0].appointmentDate").exists())
+                    .andExpect(jsonPath("$.patients[0].appointmentTime").exists())
+                    .andExpect(jsonPath("$.patients[0].appointmentStatus").value("COMPLETED"));
         }
     }
 }

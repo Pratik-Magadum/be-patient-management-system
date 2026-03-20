@@ -12,6 +12,7 @@ import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
 import com.eyehospital.pms.module.appointment.repository.AppointmentSpecification;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 import com.eyehospital.pms.module.patient.repository.PatientRepository;
@@ -66,7 +67,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientSearchResponseDto> getPatients(UUID hospitalId, PatientSearchRequestDto request) {
+    public PatientSearchListResponseDto getPatients(UUID hospitalId, PatientSearchRequestDto request) {
 
         Specification<Appointment> spec = Specification
                 .where(AppointmentSpecification.hasHospitalId(hospitalId));
@@ -102,13 +103,29 @@ public class PatientServiceImpl implements PatientService {
                     hospitalId, name, phone, fromDate, toDate);
         }
 
-        spec = spec.and(AppointmentSpecification.orderByDateAndTimeDesc());
+        spec = spec.and(AppointmentSpecification.orderByStatusThenDateTimeAsc());
 
         List<Appointment> appointments = appointmentRepository.findAll(spec);
 
-        return appointments.stream()
+        List<PatientSearchResponseDto> patients = appointments.stream()
                 .map(this::toSearchResponseDto)
                 .toList();
+
+        long totalPatients = patients.size();
+        long newPatients = appointments.stream()
+                .filter(a -> "NEW_VISIT".equals(a.getVisitType())).count();
+        long followUpPatients = appointments.stream()
+                .filter(a -> "FOLLOW_UP".equals(a.getVisitType())).count();
+        long completedPatients = appointments.stream()
+                .filter(a -> "COMPLETED".equals(a.getStatus())).count();
+
+        return PatientSearchListResponseDto.builder()
+                .totalPatients(totalPatients)
+                .newPatients(newPatients)
+                .followUpPatients(followUpPatients)
+                .completedPatients(completedPatients)
+                .patients(patients)
+                .build();
     }
 
     // -----------------------------------------------------------------------
@@ -120,6 +137,7 @@ public class PatientServiceImpl implements PatientService {
                 .patientName(appointment.getPatient().getFullName())
                 .mobileNumber(appointment.getPatient().getMobileNumber())
                 .visitType(appointment.getVisitType())
+                .appointmentDate(appointment.getAppointmentDate())
                 .appointmentTime(appointment.getAppointmentTime())
                 .appointmentStatus(appointment.getStatus())
                 .build();

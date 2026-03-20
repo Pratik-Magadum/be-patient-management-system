@@ -1,5 +1,6 @@
 package com.eyehospital.pms.module.patient.dto;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,6 +26,9 @@ public class PatientSearchResponseDto {
 
     @Schema(description = "Visit type: NEW_VISIT or FOLLOW_UP", example = "NEW_VISIT")
     private final String visitType;
+
+    @Schema(description = "Appointment date", example = "2026-03-20")
+    private final LocalDate appointmentDate;
 
     @Schema(description = "Appointment scheduled time", example = "09:30:00")
     private final LocalTime appointmentTime;
