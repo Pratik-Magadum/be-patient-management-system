@@ -66,7 +66,7 @@ CREATE TABLE patients (
     patient_number VARCHAR(50) UNIQUE NOT NULL,
     full_name VARCHAR(200) NOT NULL,
     mobile_number VARCHAR(20) NOT NULL,
-    age INTEGER,
+    age INTEGER not null,
     gender VARCHAR(10) CHECK (gender IN ('MALE', 'FEMALE', 'OTHER')),
     email VARCHAR(100),
     date_of_birth DATE,
