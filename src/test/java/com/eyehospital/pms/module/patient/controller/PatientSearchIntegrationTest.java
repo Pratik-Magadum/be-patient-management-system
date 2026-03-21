@@ -28,7 +28,7 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
  *
  * <p>Security filters are disabled ({@code addFilters = false} inherited from
  * {@link BaseIntegrationTest}) so these tests focus purely on the search
- * business logic, validation, and response format.</p>
+ * business logic, validation, pagination, and response format.</p>
  */
 @DisplayName("PatientController — getPatients Integration Tests")
 class PatientSearchIntegrationTest extends BaseIntegrationTest {
@@ -64,6 +64,11 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
         patient.setHospital(hospitalRepository.getReferenceById(hospitalId));
         patient.setFullName(fullName);
         patient.setMobileNumber(mobile);
+        patient.setAge(35);
+        patient.setGender("MALE");
+        patient.setEmail(fullName.toLowerCase().replace(" ", ".") + "@test.com");
+        patient.setDateOfBirth(LocalDate.of(1990, 5, 15));
+        patient.setAddress("123 Test Street");
         return patientRepository.saveAndFlush(patient);
     }
 
@@ -106,7 +111,6 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             Patient p = createPatient("Today Patient", "+91-9000000001");
             createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
 
-            // Yesterday's appointment — should NOT be returned
             Patient p2 = createPatient("Yesterday Patient", "+91-9000000002");
             createAppointment(p2, "NEW_VISIT", "COMPLETED", LocalDate.now().minusDays(1), LocalTime.of(10, 0));
 
@@ -119,22 +123,6 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("returns today's patients when all params are empty strings")
-        void getPatients_EmptyStrings_ReturnsTodayPatients() throws Exception {
-            Patient p = createPatient("Today Empty", "+91-9000000003");
-            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
-
-            mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "")
-                            .param("phone", "")
-                            .requestAttr("hospitalId", hospitalId.toString())
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(1))
-                    .andExpect(jsonPath("$.patients[0].patientName").value("Today Empty"));
-        }
-
-        @Test
         @DisplayName("returns empty list when no patients have appointments today")
         void getPatients_NoCriteria_NoTodayAppointments_ReturnsEmptyList() throws Exception {
             Patient p = createPatient("Tomorrow Patient", "+91-9000000004");
@@ -144,7 +132,22 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(0));
+                    .andExpect(jsonPath("$.patients.length()").value(0))
+                    .andExpect(jsonPath("$.totalPatients").value(0));
+        }
+
+        @Test
+        @DisplayName("default pagination uses page=0 and size=10")
+        void getPatients_NoCriteria_DefaultPagination() throws Exception {
+            Patient p = createPatient("Paged Patient", "+91-9000000005");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.currentPage").value(0))
+                    .andExpect(jsonPath("$.pageSize").value(10));
         }
     }
 
@@ -186,104 +189,35 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isConflict());
         }
-    }
-
-    // =======================================================================
-    // Search by name
-    // =======================================================================
-
-    @Nested
-    @DisplayName("GET /api/v1/patients/search — by name")
-    class SearchByName {
 
         @Test
-        @DisplayName("returns matching patients when searching by name")
-        void getPatients_ByName_ReturnsMatches() throws Exception {
-            Patient p1 = createPatient("Rajesh Kumar", "+91-9000000001");
-            Patient p2 = createPatient("Rajesh Sharma", "+91-9000000002");
-            createPatient("Suresh Patel", "+91-9000000003");
-
-            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
-            createAppointment(p2, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(10, 0));
-
+        @DisplayName("returns 409 when page size exceeds 100")
+        void getPatients_PageSizeTooLarge_Returns409() throws Exception {
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Rajesh")
+                            .param("size", "101")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(2))
-                    .andExpect(jsonPath("$.patients[0].patientName").exists())
-                    .andExpect(jsonPath("$.patients[0].mobileNumber").exists())
-                    .andExpect(jsonPath("$.patients[0].visitType").exists())
-                    .andExpect(jsonPath("$.patients[0].appointmentTime").exists())
-                    .andExpect(jsonPath("$.patients[0].appointmentStatus").exists())
-                    .andExpect(jsonPath("$.patients[0].appointmentDate").exists());
+                    .andExpect(status().isConflict());
         }
 
         @Test
-        @DisplayName("name search is case-insensitive")
-        void getPatients_ByNameCaseInsensitive_ReturnsMatches() throws Exception {
-            Patient p1 = createPatient("Rajesh Kumar", "+91-9100000001");
-            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
-
+        @DisplayName("returns 409 when page size is 0")
+        void getPatients_PageSizeZero_Returns409() throws Exception {
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "rajesh")
+                            .param("size", "0")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(1))
-                    .andExpect(jsonPath("$.patients[0].patientName").value("Rajesh Kumar"));
+                    .andExpect(status().isConflict());
         }
 
         @Test
-        @DisplayName("returns empty list when no patients match the name")
-        void getPatients_ByNameNoMatch_ReturnsEmptyList() throws Exception {
-            Patient p1 = createPatient("Rajesh Kumar", "+91-9200000001");
-            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
-
+        @DisplayName("returns 409 when page number is negative")
+        void getPatients_NegativePageNumber_Returns409() throws Exception {
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Nonexistent")
+                            .param("page", "-1")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients").isArray())
-                    .andExpect(jsonPath("$.patients.length()").value(0));
-        }
-    }
-
-    // =======================================================================
-    // Search by phone number
-    // =======================================================================
-
-    @Nested
-    @DisplayName("GET /api/v1/patients/search — by phone")
-    class SearchByPhone {
-
-        @Test
-        @DisplayName("returns matching patients when searching by phone number")
-        void getPatients_ByPhone_ReturnsMatches() throws Exception {
-            Patient p1 = createPatient("Phone Patient", "+91-8000000001");
-            createAppointment(p1, "NEW_VISIT", "IN_PROGRESS", LocalDate.now(), LocalTime.of(11, 0));
-
-            mockMvc.perform(get(SEARCH_URL)
-                            .param("phone", "8000000001")
-                            .requestAttr("hospitalId", hospitalId.toString())
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(1))
-                    .andExpect(jsonPath("$.patients[0].patientName").value("Phone Patient"))
-                    .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-8000000001"));
-        }
-
-        @Test
-        @DisplayName("returns empty list when no patients match the phone")
-        void getPatients_ByPhoneNoMatch_ReturnsEmptyList() throws Exception {
-            mockMvc.perform(get(SEARCH_URL)
-                            .param("phone", "0000000000")
-                            .requestAttr("hospitalId", hospitalId.toString())
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.patients.length()").value(0));
+                    .andExpect(status().isConflict());
         }
     }
 
@@ -323,7 +257,6 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             Patient p = createPatient("Same Day Patient", "+91-6100000001");
             createAppointment(p, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
 
-            // Different day — should NOT be returned
             Patient p2 = createPatient("Other Day Patient", "+91-6100000002");
             createAppointment(p2, "NEW_VISIT", "REGISTERED", today.plusDays(1), LocalTime.of(10, 0));
 
@@ -356,32 +289,70 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     }
 
     // =======================================================================
-    // Combined criteria
+    // Pagination
     // =======================================================================
 
     @Nested
-    @DisplayName("GET /api/v1/patients/search — combined criteria")
-    class SearchCombined {
+    @DisplayName("GET /api/v1/patients/search — pagination")
+    class SearchPagination {
 
         @Test
-        @DisplayName("name + date range returns intersection of both criteria")
-        void getPatients_NameAndDateRange_ReturnsIntersection() throws Exception {
+        @DisplayName("custom page and size are respected")
+        void getPatients_CustomPageSize_ReturnsCorrectPage() throws Exception {
             LocalDate today = LocalDate.now();
-            Patient p1 = createPatient("Rajesh Today", "+91-5000000001");
-            Patient p2 = createPatient("Rajesh Tomorrow", "+91-5000000002");
-
-            createAppointment(p1, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
-            createAppointment(p2, "NEW_VISIT", "REGISTERED", today.plusDays(1), LocalTime.of(10, 0));
+            for (int i = 1; i <= 5; i++) {
+                Patient p = createPatient("Page Patient " + i, "+91-700000000" + i);
+                createAppointment(p, "NEW_VISIT", "REGISTERED", today, LocalTime.of(8 + i, 0));
+            }
 
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Rajesh")
-                            .param("fromDate", today.toString())
-                            .param("toDate", today.toString())
+                            .param("size", "2")
+                            .param("page", "0")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(2))
+                    .andExpect(jsonPath("$.currentPage").value(0))
+                    .andExpect(jsonPath("$.pageSize").value(2))
+                    .andExpect(jsonPath("$.totalPages").value(3))
+                    .andExpect(jsonPath("$.totalPatients").value(5));
+        }
+
+        @Test
+        @DisplayName("second page returns remaining results")
+        void getPatients_SecondPage_ReturnsRemaining() throws Exception {
+            LocalDate today = LocalDate.now();
+            for (int i = 1; i <= 3; i++) {
+                Patient p = createPatient("Second Page Patient " + i, "+91-710000000" + i);
+                createAppointment(p, "NEW_VISIT", "REGISTERED", today, LocalTime.of(8 + i, 0));
+            }
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("size", "2")
+                            .param("page", "1")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.patients.length()").value(1))
-                    .andExpect(jsonPath("$.patients[0].patientName").value("Rajesh Today"));
+                    .andExpect(jsonPath("$.currentPage").value(1))
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(jsonPath("$.totalPatients").value(3));
+        }
+
+        @Test
+        @DisplayName("empty page beyond total returns empty patients list")
+        void getPatients_BeyondLastPage_ReturnsEmpty() throws Exception {
+            Patient p = createPatient("Only Patient", "+91-7200000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("size", "10")
+                            .param("page", "5")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(0))
+                    .andExpect(jsonPath("$.totalPatients").value(1));
         }
     }
 
@@ -399,7 +370,6 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             Patient ownPatient = createPatient("Own Hospital Patient", "+91-4000000001");
             createAppointment(ownPatient, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
 
-            // Create patient in a different hospital
             Hospital otherHospital = new Hospital();
             otherHospital.setName("Other Hospital");
             otherHospital.setSubdomain("other-search-" + UUID.randomUUID().toString().substring(0, 8));
@@ -411,8 +381,12 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
 
             Patient otherPatient = new Patient();
             otherPatient.setHospital(otherHospital);
-            otherPatient.setFullName("Own Hospital Patient");
+            otherPatient.setFullName("Other Hospital Patient");
             otherPatient.setMobileNumber("+91-4000000002");
+            otherPatient.setAge(40);
+            otherPatient.setGender("FEMALE");
+            otherPatient.setAge(40);
+            otherPatient.setGender("FEMALE");
             otherPatient = patientRepository.saveAndFlush(otherPatient);
 
             Appointment otherAppt = new Appointment();
@@ -424,9 +398,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             otherAppt.setStatus("REGISTERED");
             appointmentRepository.saveAndFlush(otherAppt);
 
-            // Search by the common name — should only return own hospital data
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Own Hospital Patient")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -436,7 +408,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     }
 
     // =======================================================================
-    // Response format
+    // Response format — counts and full patient details
     // =======================================================================
 
     @Nested
@@ -444,8 +416,8 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     class SearchResponseFormat {
 
         @Test
-        @DisplayName("response contains summary counts and patients array")
-        void getPatients_ValidRequest_ReturnsWrapperWithCounts() throws Exception {
+        @DisplayName("response contains summary counts, pagination, and patients array")
+        void getPatients_ValidRequest_ReturnsWrapperWithCountsAndPagination() throws Exception {
             Patient p1 = createPatient("Format Patient 1", "+91-3000000001");
             Patient p2 = createPatient("Format Patient 2", "+91-3000000002");
             Patient p3 = createPatient("Format Patient 3", "+91-3000000003");
@@ -454,7 +426,6 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             createAppointment(p3, "NEW_VISIT", "IN_PROGRESS", LocalDate.now(), LocalTime.of(11, 0));
 
             mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Format")
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -462,23 +433,30 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                     .andExpect(jsonPath("$.newPatients").value(3))
                     .andExpect(jsonPath("$.followUpPatients").value(0))
                     .andExpect(jsonPath("$.completedPatients").value(1))
+                    .andExpect(jsonPath("$.currentPage").value(0))
+                    .andExpect(jsonPath("$.pageSize").value(10))
+                    .andExpect(jsonPath("$.totalPages").value(1))
                     .andExpect(jsonPath("$.patients").isArray())
                     .andExpect(jsonPath("$.patients.length()").value(3));
         }
 
         @Test
-        @DisplayName("each result has patientName, mobileNumber, visitType, appointmentDate, appointmentTime, appointmentStatus")
+        @DisplayName("each result contains all patient and appointment fields")
         void getPatients_ValidRequest_ResultContainsAllFields() throws Exception {
             Patient p = createPatient("Fields Patient", "+91-3100000001");
             createAppointment(p, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(14, 30));
 
-            mockMvc.perform(get(SEARCH_URL)
-                            .param("name", "Fields")
+            mockMvc.perform( get(SEARCH_URL)
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.patients[0].patientName").value("Fields Patient"))
                     .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-3100000001"))
+                    .andExpect(jsonPath("$.patients[0].age").value(35))
+                    .andExpect(jsonPath("$.patients[0].gender").value("MALE"))
+                    .andExpect(jsonPath("$.patients[0].email").exists())
+                    .andExpect(jsonPath("$.patients[0].dateOfBirth").exists())
+                    .andExpect(jsonPath("$.patients[0].address").exists())
                     .andExpect(jsonPath("$.patients[0].visitType").value("NEW_VISIT"))
                     .andExpect(jsonPath("$.patients[0].appointmentDate").exists())
                     .andExpect(jsonPath("$.patients[0].appointmentTime").exists())

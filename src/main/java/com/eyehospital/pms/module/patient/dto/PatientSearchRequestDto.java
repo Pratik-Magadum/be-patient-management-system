@@ -27,12 +27,6 @@ import lombok.Setter;
 @Schema(description = "Patient search criteria — all fields are optional")
 public class PatientSearchRequestDto {
 
-    @Schema(description = "Partial patient name (case-insensitive)", example = "Rajesh")
-    private String name;
-
-    @Schema(description = "Partial phone number", example = "9800000001")
-    private String phone;
-
     @Schema(description = "Start date for appointment search (inclusive, ISO format). "
             + "Must be equal to or before toDate.", example = "2026-03-15")
     private LocalDate fromDate;
@@ -41,14 +35,19 @@ public class PatientSearchRequestDto {
             + "Must be equal to or after fromDate.", example = "2026-03-19")
     private LocalDate toDate;
 
+    @Builder.Default
+    @Schema(description = "Page number (0-based)", example = "0")
+    private int page = 0;
+
+    @Builder.Default
+    @Schema(description = "Page size", example = "10")
+    private int size = 10;
+
     /**
      * Returns {@code true} if no meaningful search criterion has been set.
      */
     @JsonIgnore
     public boolean isEmpty() {
-        return (name == null || name.isBlank())
-                && (phone == null || phone.isBlank())
-                && fromDate == null
-                && toDate == null;
+        return fromDate == null && toDate == null;
     }
 }

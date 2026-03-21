@@ -10,13 +10,15 @@ import lombok.Getter;
 /**
  * Response DTO for patient search results.
  *
- * <p>Each record represents a patient–appointment pair, providing the
- * patient name, mobile number, visit type, appointment time, and status.</p>
+ * <p>Each record represents a patient–appointment pair with full patient details.</p>
  */
 @Getter
 @Builder
-@Schema(description = "Patient search result with appointment details")
+@Schema(description = "Patient search result with full patient and appointment details")
 public class PatientSearchResponseDto {
+
+    @Schema(description = "Patient number", example = "PT-2026-00001")
+    private final String patientNumber;
 
     @Schema(description = "Patient full name", example = "Rajesh Kumar")
     private final String patientName;
@@ -29,6 +31,15 @@ public class PatientSearchResponseDto {
 
     @Schema(description = "Patient gender: MALE, FEMALE, or OTHER", example = "MALE")
     private final String gender;
+
+    @Schema(description = "Patient email", example = "rajesh@email.com")
+    private final String email;
+
+    @Schema(description = "Patient date of birth", example = "1990-05-15")
+    private final LocalDate dateOfBirth;
+
+    @Schema(description = "Patient address", example = "12 MG Road, Mumbai")
+    private final String address;
 
     @Schema(description = "Visit type: NEW_VISIT or FOLLOW_UP", example = "NEW_VISIT")
     private final String visitType;

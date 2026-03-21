@@ -66,6 +66,16 @@ public class PatientControllerImpl implements PatientController {
                 throw new BusinessException("INVALID_DATE_RANGE",
                         "fromDate must be equal to or before toDate");
             }
+
+            // Validate: page size must be positive and reasonable
+            if (searchRequest.getSize() < 1 || searchRequest.getSize() > 100) {
+                throw new BusinessException("INVALID_PAGE_SIZE",
+                        "Page size must be between 1 and 100");
+            }
+            if (searchRequest.getPage() < 0) {
+                throw new BusinessException("INVALID_PAGE_NUMBER",
+                        "Page number must be 0 or greater");
+            }
         }
 
         log.info("GET /patients/search - hospitalId={}", hospitalId);

@@ -97,6 +97,8 @@ class PatientControllerIntegrationTest extends BaseIntegrationTest {
         patient.setHospital(hospitalRepository.getReferenceById(hospitalId));
         patient.setFullName(fullName);
         patient.setMobileNumber(mobile);
+        patient.setAge(35);
+        patient.setGender("MALE");
         return patientRepository.saveAndFlush(patient);
     }
 
@@ -273,6 +275,8 @@ class PatientControllerIntegrationTest extends BaseIntegrationTest {
             otherPatient.setHospital(otherHospital);
             otherPatient.setFullName("Other Hospital Patient");
             otherPatient.setMobileNumber("+91-5000000002");
+            otherPatient.setAge(40);
+            otherPatient.setGender("FEMALE");
             otherPatient = patientRepository.saveAndFlush(otherPatient);
 
             Appointment otherAppt = new Appointment();

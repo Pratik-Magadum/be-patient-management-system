@@ -74,11 +74,11 @@ public interface PatientController {
      */
     @GetMapping(ApiConstants.PATIENT_SEARCH)
     @Operation(
-            summary     = "Get patients",
-            description = "Searches patients by name, phone number, or date range. "
+            summary     = "Get patients (paginated)",
+            description = "Searches patients by date range with pagination. "
                         + "If no criteria are provided, returns today's patients. "
                         + "fromDate must be equal to or before toDate. "
-                        + "Returns patient name, mobile number, visit type, appointment time, and appointment status."
+                        + "Returns full patient details with appointment information."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

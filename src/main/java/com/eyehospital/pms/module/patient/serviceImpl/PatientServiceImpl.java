@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +18,7 @@ import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
+import com.eyehospital.pms.module.patient.entity.Patient;
 import com.eyehospital.pms.module.patient.repository.PatientRepository;
 import com.eyehospital.pms.module.patient.service.PatientService;
 
@@ -72,25 +76,22 @@ public class PatientServiceImpl implements PatientService {
         Specification<Appointment> spec = Specification
                 .where(AppointmentSpecification.hasHospitalId(hospitalId));
 
+        int page = 0;
+        int size = 10;
+
+        if (request != null) {
+            page = request.getPage();
+            size = request.getSize();
+        }
+
         // Default to today's patients when request is null or empty
         if (request == null || request.isEmpty()) {
             LocalDate today = LocalDate.now();
             log.debug("No search criteria provided — returning today's patients for hospitalId={}", hospitalId);
             spec = spec.and(AppointmentSpecification.onDate(today));
         } else {
-            String name = (request.getName() != null && !request.getName().isBlank())
-                    ? request.getName().trim() : null;
-            String phone = (request.getPhone() != null && !request.getPhone().isBlank())
-                    ? request.getPhone().trim() : null;
             LocalDate fromDate = request.getFromDate();
             LocalDate toDate = request.getToDate();
-
-            if (name != null) {
-                spec = spec.and(AppointmentSpecification.patientNameContains(name));
-            }
-            if (phone != null) {
-                spec = spec.and(AppointmentSpecification.patientPhoneContains(phone));
-            }
 
             // When both dates are equal, treat as single-date search
             if (fromDate != null && toDate != null && fromDate.isEqual(toDate)) {
@@ -99,31 +100,35 @@ public class PatientServiceImpl implements PatientService {
                 spec = spec.and(AppointmentSpecification.betweenDates(fromDate, toDate));
             }
 
-            log.debug("Searching patients for hospitalId={} name={} phone={} fromDate={} toDate={}",
-                    hospitalId, name, phone, fromDate, toDate);
+            log.debug("Searching patients for hospitalId={} fromDate={} toDate={} page={} size={}",
+                    hospitalId, fromDate, toDate, page, size);
         }
 
         spec = spec.and(AppointmentSpecification.orderByStatusThenDateTimeAsc());
 
-        List<Appointment> appointments = appointmentRepository.findAll(spec);
+        Pageable pageable = PageRequest.of(page, size);
 
-        List<PatientSearchResponseDto> patients = appointments.stream()
+        Page<Appointment> appointmentPage = appointmentRepository.findAll(spec, pageable);
+
+        List<PatientSearchResponseDto> patients = appointmentPage.getContent().stream()
                 .map(this::toSearchResponseDto)
                 .toList();
 
-        long totalPatients = patients.size();
-        long newPatients = appointments.stream()
+        long newPatients = appointmentPage.getContent().stream()
                 .filter(a -> "NEW_VISIT".equals(a.getVisitType())).count();
-        long followUpPatients = appointments.stream()
+        long followUpPatients = appointmentPage.getContent().stream()
                 .filter(a -> "FOLLOW_UP".equals(a.getVisitType())).count();
-        long completedPatients = appointments.stream()
+        long completedPatients = appointmentPage.getContent().stream()
                 .filter(a -> "COMPLETED".equals(a.getStatus())).count();
 
         return PatientSearchListResponseDto.builder()
-                .totalPatients(totalPatients)
+                .totalPatients(appointmentPage.getTotalElements())
                 .newPatients(newPatients)
                 .followUpPatients(followUpPatients)
                 .completedPatients(completedPatients)
+                .currentPage(appointmentPage.getNumber())
+                .pageSize(appointmentPage.getSize())
+                .totalPages(appointmentPage.getTotalPages())
                 .patients(patients)
                 .build();
     }
@@ -133,11 +138,16 @@ public class PatientServiceImpl implements PatientService {
     // -----------------------------------------------------------------------
 
     private PatientSearchResponseDto toSearchResponseDto(Appointment appointment) {
+        Patient patient = appointment.getPatient();
         return PatientSearchResponseDto.builder()
-                .patientName(appointment.getPatient().getFullName())
-                .mobileNumber(appointment.getPatient().getMobileNumber())
-                .age(appointment.getPatient().getAge())
-                .gender(appointment.getPatient().getGender())
+                .patientNumber(patient.getPatientNumber())
+                .patientName(patient.getFullName())
+                .mobileNumber(patient.getMobileNumber())
+                .age(patient.getAge())
+                .gender(patient.getGender())
+                .email(patient.getEmail())
+                .dateOfBirth(patient.getDateOfBirth())
+                .address(patient.getAddress())
                 .visitType(appointment.getVisitType())
                 .appointmentDate(appointment.getAppointmentDate())
                 .appointmentTime(appointment.getAppointmentTime())
