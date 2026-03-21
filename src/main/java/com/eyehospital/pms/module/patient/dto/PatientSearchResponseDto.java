@@ -24,6 +24,12 @@ public class PatientSearchResponseDto {
     @Schema(description = "Patient mobile number", example = "+91-9800000001")
     private final String mobileNumber;
 
+    @Schema(description = "Patient age", example = "35")
+    private final Integer age;
+
+    @Schema(description = "Patient gender: MALE, FEMALE, or OTHER", example = "MALE")
+    private final String gender;
+
     @Schema(description = "Visit type: NEW_VISIT or FOLLOW_UP", example = "NEW_VISIT")
     private final String visitType;
 

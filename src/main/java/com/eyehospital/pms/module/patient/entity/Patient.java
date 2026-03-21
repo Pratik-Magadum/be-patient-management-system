@@ -71,6 +71,12 @@ public class Patient {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @Column(name = "age")
+    private Integer age;
+
+    @Column(name = "gender", length = 10)
+    private String gender;
+
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
 

@@ -136,6 +136,8 @@ public class PatientServiceImpl implements PatientService {
         return PatientSearchResponseDto.builder()
                 .patientName(appointment.getPatient().getFullName())
                 .mobileNumber(appointment.getPatient().getMobileNumber())
+                .age(appointment.getPatient().getAge())
+                .gender(appointment.getPatient().getGender())
                 .visitType(appointment.getVisitType())
                 .appointmentDate(appointment.getAppointmentDate())
                 .appointmentTime(appointment.getAppointmentTime())
