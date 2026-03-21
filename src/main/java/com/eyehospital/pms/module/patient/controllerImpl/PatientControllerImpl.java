@@ -1,5 +1,6 @@
 package com.eyehospital.pms.module.patient.controllerImpl;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -36,13 +37,29 @@ public class PatientControllerImpl implements PatientController {
     private final PatientService patientService;
 
     @Override
-    public PatientDashboardResponseDto getTodayDashboard(HttpServletRequest request) {
+    public PatientDashboardResponseDto getDashboard(LocalDate fromDate, LocalDate toDate,
+                                                    HttpServletRequest request) {
 
         UUID hospitalId = extractHospitalId(request);
 
-        log.info("GET /patients/dashboard/today - fetching dashboard for hospitalId={}", hospitalId);
+        // Validate: both dates must be provided together
+        boolean hasFromDate = fromDate != null;
+        boolean hasToDate = toDate != null;
+        if (hasFromDate != hasToDate) {
+            throw new BusinessException("INVALID_DATE_RANGE",
+                    "Both fromDate and toDate are required for date range search");
+        }
 
-        return patientService.getTodayDashboard(hospitalId);
+        // Validate: fromDate must be equal to or before toDate
+        if (hasFromDate && fromDate.isAfter(toDate)) {
+            throw new BusinessException("INVALID_DATE_RANGE",
+                    "fromDate must be equal to or before toDate");
+        }
+
+        log.info("GET /patients/dashboard/today - fetching dashboard for hospitalId={} from={} to={}",
+                hospitalId, fromDate, toDate);
+
+        return patientService.getDashboard(hospitalId, fromDate, toDate);
     }
 
     @Override

@@ -2,12 +2,16 @@ package com.eyehospital.pms.module.patient.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
+@JsonPropertyOrder({"totalPatients", "newPatients", "followUpPatients", "completedPatients",
+        "currentPage", "pageSize", "totalPages", "patients"})
 @Schema(description = "Paginated patient search results with summary counts")
 public class PatientSearchListResponseDto {
 

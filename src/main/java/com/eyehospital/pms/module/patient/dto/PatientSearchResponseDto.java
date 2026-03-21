@@ -3,6 +3,8 @@ package com.eyehospital.pms.module.patient.dto;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +16,9 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@JsonPropertyOrder({"patientNumber", "patientName", "mobileNumber", "age", "gender",
+        "email", "dateOfBirth", "address", "visitType", "appointmentDate",
+        "appointmentTime", "appointmentStatus"})
 @Schema(description = "Patient search result with full patient and appointment details")
 public class PatientSearchResponseDto {
 

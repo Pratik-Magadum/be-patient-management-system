@@ -1,7 +1,11 @@
 package com.eyehospital.pms.module.patient.controller;
 
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
@@ -9,6 +13,7 @@ import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -38,9 +43,11 @@ public interface PatientController {
      */
     @GetMapping(ApiConstants.PATIENT_DASHBOARD_TODAY)
     @Operation(
-            summary     = "Get today's patient dashboard",
-            description = "Returns today's patient statistics: total appointments, new visits, follow-up visits, "
-                        + "completed appointments, and total registered patients for the authenticated user's hospital."
+            summary     = "Get patient dashboard",
+            description = "Returns patient statistics: total appointments, new visits, follow-up visits, "
+                        + "completed appointments, and total registered patients for the authenticated user's hospital. "
+                        + "Defaults to today when no dates are provided. "
+                        + "Both fromDate and toDate must be provided together for date range queries."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -54,12 +61,22 @@ public interface PatientController {
                     content      = @Content(schema = @Schema(hidden = true))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description  = "Invalid date parameters",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "500",
                     description  = "Unexpected server error",
                     content      = @Content(schema = @Schema(hidden = true))
             )
     })
-    PatientDashboardResponseDto getTodayDashboard(HttpServletRequest request);
+    PatientDashboardResponseDto getDashboard(
+            @Parameter(description = "Start date (inclusive, ISO format)", example = "2026-03-15")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @Parameter(description = "End date (inclusive, ISO format)", example = "2026-03-21")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            HttpServletRequest request);
 
     /**
      * Searches patients by criteria in the request DTO.

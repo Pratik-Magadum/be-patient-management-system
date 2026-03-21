@@ -41,26 +41,46 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
-    public PatientDashboardResponseDto getTodayDashboard(UUID hospitalId) {
-        LocalDate today = LocalDate.now();
-        log.debug("Building patient dashboard for hospitalId={} on date={}", hospitalId, today);
+    public PatientDashboardResponseDto getDashboard(UUID hospitalId, LocalDate fromDate, LocalDate toDate) {
+        // Default to today when no dates provided
+        if (fromDate == null || toDate == null) {
+            fromDate = LocalDate.now();
+            toDate = fromDate;
+        }
 
-        long totalPatients = appointmentRepository
-                .countByHospitalIdAndAppointmentDate(hospitalId, today);
+        log.debug("Building patient dashboard for hospitalId={} from={} to={}", hospitalId, fromDate, toDate);
 
-        long newPatients = appointmentRepository
-                .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, today, "NEW_VISIT");
+        long totalPatients;
+        long newPatients;
+        long followUpPatients;
+        long completedPatients;
 
-        long followUpPatients = appointmentRepository
-                .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, today, "FOLLOW_UP");
-
-        long completedPatients = appointmentRepository
-                .countByHospitalIdAndAppointmentDateAndStatus(hospitalId, today, "COMPLETED");
+        if (fromDate.isEqual(toDate)) {
+            // Single-date queries (existing optimised methods)
+            totalPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDate(hospitalId, fromDate);
+            newPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, fromDate, "NEW_VISIT");
+            followUpPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, fromDate, "FOLLOW_UP");
+            completedPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateAndStatus(hospitalId, fromDate, "COMPLETED");
+        } else {
+            // Date-range queries
+            totalPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateBetween(hospitalId, fromDate, toDate);
+            newPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitType(hospitalId, fromDate, toDate, "NEW_VISIT");
+            followUpPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitType(hospitalId, fromDate, toDate, "FOLLOW_UP");
+            completedPatients = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateBetweenAndStatus(hospitalId, fromDate, toDate, "COMPLETED");
+        }
 
         long totalRegisteredPatients = patientRepository.countByHospitalId(hospitalId);
 
         return PatientDashboardResponseDto.builder()
-                .date(today)
+                .date(fromDate)
                 .totalPatients(totalPatients)
                 .newPatients(newPatients)
                 .followUpPatients(followUpPatients)
@@ -78,6 +98,8 @@ public class PatientServiceImpl implements PatientService {
 
         int page = 0;
         int size = 10;
+        LocalDate fromDate = null;
+        LocalDate toDate = null;
 
         if (request != null) {
             page = request.getPage();
@@ -87,11 +109,13 @@ public class PatientServiceImpl implements PatientService {
         // Default to today's patients when request is null or empty
         if (request == null || request.isEmpty()) {
             LocalDate today = LocalDate.now();
+            fromDate = today;
+            toDate = today;
             log.debug("No search criteria provided — returning today's patients for hospitalId={}", hospitalId);
             spec = spec.and(AppointmentSpecification.onDate(today));
         } else {
-            LocalDate fromDate = request.getFromDate();
-            LocalDate toDate = request.getToDate();
+            fromDate = request.getFromDate();
+            toDate = request.getToDate();
 
             // When both dates are equal, treat as single-date search
             if (fromDate != null && toDate != null && fromDate.isEqual(toDate)) {
@@ -114,18 +138,14 @@ public class PatientServiceImpl implements PatientService {
                 .map(this::toSearchResponseDto)
                 .toList();
 
-        long newPatients = appointmentPage.getContent().stream()
-                .filter(a -> "NEW_VISIT".equals(a.getVisitType())).count();
-        long followUpPatients = appointmentPage.getContent().stream()
-                .filter(a -> "FOLLOW_UP".equals(a.getVisitType())).count();
-        long completedPatients = appointmentPage.getContent().stream()
-                .filter(a -> "COMPLETED".equals(a.getStatus())).count();
+        // Use repository counts for accurate totals across all pages
+        PatientDashboardResponseDto dashboard = getDashboard(hospitalId, fromDate, toDate);
 
         return PatientSearchListResponseDto.builder()
-                .totalPatients(appointmentPage.getTotalElements())
-                .newPatients(newPatients)
-                .followUpPatients(followUpPatients)
-                .completedPatients(completedPatients)
+                .totalPatients(dashboard.getTotalPatients())
+                .newPatients(dashboard.getNewPatients())
+                .followUpPatients(dashboard.getFollowUpPatients())
+                .completedPatients(dashboard.getCompletedPatients())
                 .currentPage(appointmentPage.getNumber())
                 .pageSize(appointmentPage.getSize())
                 .totalPages(appointmentPage.getTotalPages())

@@ -1,5 +1,6 @@
 package com.eyehospital.pms.module.patient.service;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
@@ -15,12 +16,17 @@ import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 public interface PatientService {
 
     /**
-     * Retrieves today's patient dashboard statistics for the given hospital.
+     * Retrieves patient dashboard statistics for the given hospital.
+     *
+     * <p>When {@code fromDate} and {@code toDate} are both null, defaults to today.
+     * When both dates are provided, computes statistics for the date range.</p>
      *
      * @param hospitalId the tenant hospital identifier
-     * @return dashboard statistics including today's total, new, follow-up, and completed patient counts
+     * @param fromDate   start date (inclusive), or null for today
+     * @param toDate     end date (inclusive), or null for today
+     * @return dashboard statistics including total, new, follow-up, and completed patient counts
      */
-    PatientDashboardResponseDto getTodayDashboard(UUID hospitalId);
+    PatientDashboardResponseDto getDashboard(UUID hospitalId, LocalDate fromDate, LocalDate toDate);
 
     /**
      * Searches patients by the criteria in the request DTO.
