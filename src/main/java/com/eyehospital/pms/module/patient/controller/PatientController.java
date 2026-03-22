@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.patient.controller;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +12,7 @@ import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -116,5 +118,46 @@ public interface PatientController {
     })
     PatientSearchListResponseDto getPatients(
             PatientSearchRequestDto searchRequest,
+            HttpServletRequest request);
+
+    /**
+     * Searches patients by name and/or phone number across all appointment dates.
+     *
+     * <p>At least one of {@code name} or {@code phone} must be provided.
+     * Both are partial-match: name is case-insensitive, phone matches any substring.</p>
+     *
+     * @param name    partial patient name (case-insensitive), optional
+     * @param phoneNumber   partial phone number, optional
+     * @param request the HTTP request (used to extract hospitalId from JWT)
+     * @return list of matching patient–appointment records
+     */
+    @GetMapping(ApiConstants.PATIENT_SEARCH_BY_NAME_PHONE)
+    @Operation(
+            summary     = "Search patients by name and/or phone number",
+            description = "Searches patients by partial name (case-insensitive) and/or partial phone number. "
+                        + "At least one of name or phone must be provided. "
+                        + "Returns all matching appointments across all dates."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Matching patients retrieved successfully"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description  = "Neither name nor phone provided",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized — missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    List<PatientSearchResponseDto> searchByNamePhone(
+            @Parameter(description = "Partial patient name (case-insensitive)", example = "Rajesh")
+            @RequestParam(required = false) String name,
+            @Parameter(description = "Partial phone number", example = "+91-9800")
+            @RequestParam(required = false) String phoneNumber,
             HttpServletRequest request);
 }

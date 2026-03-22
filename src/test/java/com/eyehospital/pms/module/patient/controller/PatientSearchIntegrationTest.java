@@ -357,6 +357,207 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     }
 
     // =======================================================================
+    // Search by name and phone number — NEW API
+    // GET /api/v1/patients/search/by-name-phone?name=...&phone=...
+    // =======================================================================
+
+    @Nested
+    @DisplayName("GET /api/v1/patients/search/by-name-phone — search by name and phone")
+    class SearchByNameAndPhone {
+
+        private static final String SEARCH_BY_NAME_PHONE_URL =
+                ApiConstants.PATIENTS + ApiConstants.PATIENT_SEARCH_BY_NAME_PHONE;
+
+        @Test
+        @DisplayName("returns patients matching partial name (case-insensitive)")
+        void searchByNamePhone_ByName_ReturnsMatchingPatients() throws Exception {
+            Patient p1 = createPatient("Rajesh Kumar", "+91-8000000001");
+            Patient p2 = createPatient("Suresh Sharma", "+91-8000000002");
+            Patient p3 = createPatient("Priya Singh", "+91-8000000003");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
+            createAppointment(p3, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(11, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "rajesh")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].patientName").value("Rajesh Kumar"));
+        }
+
+        @Test
+        @DisplayName("name search is case-insensitive")
+        void searchByNamePhone_CaseInsensitive_ReturnsMatch() throws Exception {
+            Patient p = createPatient("Anita Desai", "+91-8100000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "ANITA")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].patientName").value("Anita Desai"));
+        }
+
+        @Test
+        @DisplayName("returns patients matching partial phone number")
+        void searchByNamePhone_ByPhone_ReturnsMatchingPatients() throws Exception {
+            Patient p1 = createPatient("Phone Patient 1", "+91-8200000001");
+            Patient p2 = createPatient("Phone Patient 2", "+91-8200000002");
+            Patient p3 = createPatient("Phone Patient 3", "+91-8300000003");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
+            createAppointment(p3, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(11, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("phoneNumber", "820000000")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("combines name and phone filters (AND logic)")
+        void searchByNamePhone_ByNameAndPhone_ReturnsIntersection() throws Exception {
+            Patient p1 = createPatient("Rahul Verma", "+91-8400000001");
+            Patient p2 = createPatient("Rahul Gupta", "+91-8500000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "Rahul")
+                            .param("phoneNumber", "840000")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].patientName").value("Rahul Verma"));
+        }
+
+        @Test
+        @DisplayName("returns empty when name matches no patients")
+        void searchByNamePhone_NonExistingName_ReturnsEmpty() throws Exception {
+            Patient p = createPatient("Existing Patient", "+91-8700000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "NonExistent")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("returns empty when phone matches no patients")
+        void searchByNamePhone_NonExistingPhone_ReturnsEmpty() throws Exception {
+            Patient p = createPatient("Phone Search Patient", "+91-8800000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("phoneNumber", "9999999999")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("searches across all appointment dates")
+        void searchByNamePhone_ByName_SearchesAllDates() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p = createPatient("AllDates Patient", "+91-8900000001");
+            createAppointment(p, "NEW_VISIT", "COMPLETED", today.minusDays(5), LocalTime.of(9, 0));
+            createAppointment(p, "NEW_VISIT", "REGISTERED", today.plusDays(3), LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "AllDates")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("respects tenant isolation")
+        void searchByNamePhone_MultiTenant_ReturnsOnlyOwnHospitalData() throws Exception {
+            Patient ownPatient = createPatient("Shared Name Patient", "+91-8910000001");
+            createAppointment(ownPatient, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            Hospital otherHospital = new Hospital();
+            otherHospital.setName("Other Hospital");
+            otherHospital.setSubdomain("other-name-" + UUID.randomUUID().toString().substring(0, 8));
+            otherHospital.setAddress("456 Other Street");
+            otherHospital.setContactEmail("other@name.com");
+            otherHospital.setContactPhone("+91-9999999999");
+            otherHospital.setActive(true);
+            otherHospital = hospitalRepository.saveAndFlush(otherHospital);
+
+            Patient otherPatient = new Patient();
+            otherPatient.setHospital(otherHospital);
+            otherPatient.setFullName("Shared Name Patient");
+            otherPatient.setMobileNumber("+91-8910000002");
+            otherPatient.setAge(40);
+            otherPatient.setGender("FEMALE");
+            otherPatient = patientRepository.saveAndFlush(otherPatient);
+
+            Appointment otherAppt = new Appointment();
+            otherAppt.setHospitalId(otherHospital.getHospitalId());
+            otherAppt.setPatient(otherPatient);
+            otherAppt.setAppointmentDate(LocalDate.now());
+            otherAppt.setAppointmentTime(LocalTime.of(11, 0));
+            otherAppt.setVisitType("NEW_VISIT");
+            otherAppt.setStatus("REGISTERED");
+            appointmentRepository.saveAndFlush(otherAppt);
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "Shared Name")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].mobileNumber").value("+91-8910000001"));
+        }
+
+        @Test
+        @DisplayName("returns 409 when neither name nor phone is provided")
+        void searchByNamePhone_NoParams_Returns409() throws Exception {
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("response contains all patient and appointment fields")
+        void searchByNamePhone_ValidRequest_ContainsAllFields() throws Exception {
+            Patient p = createPatient("Fields Patient", "+91-8920000001");
+            createAppointment(p, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(14, 30));
+
+            mockMvc.perform(get(SEARCH_BY_NAME_PHONE_URL)
+                            .param("name", "Fields")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].patientName").value("Fields Patient"))
+                    .andExpect(jsonPath("$[0].mobileNumber").value("+91-8920000001"))
+                    .andExpect(jsonPath("$[0].age").value(35))
+                    .andExpect(jsonPath("$[0].gender").value("MALE"))
+                    .andExpect(jsonPath("$[0].email").exists())
+                    .andExpect(jsonPath("$[0].dateOfBirth").exists())
+                    .andExpect(jsonPath("$[0].address").exists())
+                    .andExpect(jsonPath("$[0].visitType").value("NEW_VISIT"))
+                    .andExpect(jsonPath("$[0].appointmentDate").exists())
+                    .andExpect(jsonPath("$[0].appointmentTime").exists())
+                    .andExpect(jsonPath("$[0].appointmentStatus").value("COMPLETED"));
+        }
+    }
+
+    // =======================================================================
     // Tenant isolation
     // =======================================================================
 

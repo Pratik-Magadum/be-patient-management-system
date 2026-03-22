@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.patient.controllerImpl;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -10,6 +11,7 @@ import com.eyehospital.pms.module.patient.controller.PatientController;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
+import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 import com.eyehospital.pms.module.patient.service.PatientService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,6 +100,25 @@ public class PatientControllerImpl implements PatientController {
         log.info("GET /patients/search - hospitalId={}", hospitalId);
 
         return patientService.getPatients(hospitalId, searchRequest);
+    }
+
+    @Override
+    public List<PatientSearchResponseDto> searchByNamePhone(String name, String phoneNumber,
+                                                            HttpServletRequest request) {
+        UUID hospitalId = extractHospitalId(request);
+
+        boolean hasName = name != null && !name.isBlank();
+        boolean hasPhone = phoneNumber != null && !phoneNumber.isBlank();
+
+        if (!hasName && !hasPhone) {
+            throw new BusinessException("MISSING_SEARCH_CRITERIA",
+                    "At least one of name or phoneNumber must be provided");
+        }
+
+        log.info("GET /patients/search/by-name-phone - hospitalId={} name={} phoneNumber={}",
+                hospitalId, name, phoneNumber);
+
+        return patientService.searchByNamePhone(hospitalId, name, phoneNumber);
     }
 
     // -----------------------------------------------------------------------

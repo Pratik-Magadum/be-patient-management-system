@@ -154,6 +154,32 @@ public class PatientServiceImpl implements PatientService {
     }
 
     // -----------------------------------------------------------------------
+    // Search by name and phone
+    // -----------------------------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientSearchResponseDto> searchByNamePhone(UUID hospitalId, String name, String phoneNumber) {
+        log.debug("Searching by name/phone for hospitalId={} name={} phoneNumber={}", hospitalId, name, phoneNumber);
+
+        Specification<Appointment> spec = Specification
+                .where(AppointmentSpecification.hasHospitalId(hospitalId));
+
+        if (name != null && !name.isBlank()) {
+            spec = spec.and(AppointmentSpecification.patientNameContains(name.trim()));
+        }
+        if (phoneNumber != null && !phoneNumber.isBlank()) {
+            spec = spec.and(AppointmentSpecification.patientPhoneContains(phoneNumber.trim()));
+        }
+
+        spec = spec.and(AppointmentSpecification.orderByStatusThenDateTimeAsc());
+
+        return appointmentRepository.findAll(spec).stream()
+                .map(this::toSearchResponseDto)
+                .toList();
+    }
+
+    // -----------------------------------------------------------------------
     // Private mapping helpers
     // -----------------------------------------------------------------------
 
