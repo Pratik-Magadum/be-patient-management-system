@@ -34,8 +34,9 @@ public final class ApiConstants {
     // -----------------------------------------------------------------------
     public static final String PATIENTS              = API_BASE + V1 + "/patients";
     public static final String PATIENT_BY_ID         = "/{patientId}";
-    public static final String PATIENT_SEARCH        = "/search";
+    public static final String PATIENT_BY_DATES      = "/by-dates";
     public static final String PATIENT_SEARCH_BY_NAME_PHONE = "/search/by-name-phone";
+    public static final String PATIENT_DELETE         = "/{patientId}";
     public static final String PATIENT_DASHBOARD_TODAY = "/dashboard/today";
 
     // -----------------------------------------------------------------------

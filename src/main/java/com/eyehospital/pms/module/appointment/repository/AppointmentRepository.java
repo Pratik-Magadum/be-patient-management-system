@@ -47,4 +47,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID>,
      * Counts appointments by status for a given hospital within a date range (inclusive).
      */
     long countByHospitalIdAndAppointmentDateBetweenAndStatus(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
+
+    // -----------------------------------------------------------------------
+    // Count methods excluding soft-deleted patients
+    // -----------------------------------------------------------------------
+
+    long countByHospitalIdAndAppointmentDateAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate);
+
+    long countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String visitType);
+
+    long countByHospitalIdAndAppointmentDateAndStatusAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String status);
+
+    long countByHospitalIdAndAppointmentDateBetweenAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate);
+
+    long countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String visitType);
+
+    long countByHospitalIdAndAppointmentDateBetweenAndStatusAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
 }

@@ -1,5 +1,6 @@
 package com.eyehospital.pms.module.patient.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,17 @@ import com.eyehospital.pms.module.patient.entity.Patient;
 public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     /**
-     * Counts all patients belonging to a specific hospital.
+     * Counts all non-deleted patients belonging to a specific hospital.
+     */
+    long countByHospitalIdAndDeletedFalse(UUID hospitalId);
+
+    /**
+     * Counts all patients belonging to a specific hospital (including deleted).
      */
     long countByHospitalId(UUID hospitalId);
+
+    /**
+     * Finds a non-deleted patient by ID and hospital.
+     */
+    Optional<Patient> findByPatientIdAndHospitalIdAndDeletedFalse(UUID patientId, UUID hospitalId);
 }

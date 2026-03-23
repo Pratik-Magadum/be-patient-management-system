@@ -121,6 +121,13 @@ public class PatientControllerImpl implements PatientController {
         return patientService.searchByNamePhone(hospitalId, name, phoneNumber);
     }
 
+    @Override
+    public void deletePatient(UUID patientId, HttpServletRequest request) {
+        UUID hospitalId = extractHospitalId(request);
+        log.info("DELETE /patients/{} - hospitalId={}", patientId, hospitalId);
+        patientService.softDeletePatient(hospitalId, patientId);
+    }
+
     // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------

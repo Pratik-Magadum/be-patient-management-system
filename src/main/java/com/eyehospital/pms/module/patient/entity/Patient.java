@@ -80,6 +80,12 @@ public class Patient {
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     @Generated(event = {EventType.INSERT})
     private LocalDateTime createdAt;

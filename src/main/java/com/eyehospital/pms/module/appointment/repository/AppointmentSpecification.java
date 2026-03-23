@@ -21,6 +21,13 @@ public final class AppointmentSpecification {
         return (root, query, cb) -> cb.equal(root.get("hospitalId"), hospitalId);
     }
 
+    public static Specification<Appointment> patientNotDeleted() {
+        return (root, query, cb) -> {
+            Join<Appointment, Patient> patient = root.join("patient");
+            return cb.equal(patient.get("deleted"), false);
+        };
+    }
+
     public static Specification<Appointment> patientNameContains(String name) {
         return (root, query, cb) -> {
             Join<Appointment, Patient> patient = root.join("patient");

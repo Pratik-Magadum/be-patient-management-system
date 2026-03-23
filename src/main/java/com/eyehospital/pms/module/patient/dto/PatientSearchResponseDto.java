@@ -2,6 +2,7 @@ package com.eyehospital.pms.module.patient.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -16,11 +17,14 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-@JsonPropertyOrder({"patientNumber", "patientName", "mobileNumber", "age", "gender",
+@JsonPropertyOrder({"patientId", "patientNumber", "patientName", "mobileNumber", "age", "gender",
         "email", "dateOfBirth", "address", "visitType", "appointmentDate",
         "appointmentTime", "appointmentStatus"})
 @Schema(description = "Patient search result with full patient and appointment details")
 public class PatientSearchResponseDto {
+
+    @Schema(description = "Patient unique identifier", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    private final UUID patientId;
 
     @Schema(description = "Patient number", example = "PT-2026-00001")
     private final String patientNumber;

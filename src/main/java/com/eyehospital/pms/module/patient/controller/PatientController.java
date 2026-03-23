@@ -2,9 +2,12 @@ package com.eyehospital.pms.module.patient.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -91,7 +94,7 @@ public interface PatientController {
      * @param request       the HTTP request (used to extract hospitalId from JWT)
      * @return list of matching patient–appointment records (empty list if none found)
      */
-    @GetMapping(ApiConstants.PATIENT_SEARCH)
+    @GetMapping(ApiConstants.PATIENT_BY_DATES)
     @Operation(
             summary     = "Get patients (paginated)",
             description = "Searches patients by date range with pagination. "
@@ -159,5 +162,38 @@ public interface PatientController {
             @RequestParam(required = false) String name,
             @Parameter(description = "Partial phone number", example = "+91-9800")
             @RequestParam(required = false) String phoneNumber,
+            HttpServletRequest request);
+
+    /**
+     * Soft-deletes a patient by ID.
+     *
+     * @param patientId the patient UUID
+     * @param request   the HTTP request (used to extract hospitalId from JWT)
+     */
+    @DeleteMapping(ApiConstants.PATIENT_DELETE)
+    @Operation(
+            summary     = "Soft-delete a patient",
+            description = "Marks a patient as deleted (is_deleted=true) without physically removing the record. "
+                        + "Deleted patients are excluded from all search and dashboard results."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Patient soft-deleted successfully"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description  = "Patient not found, belongs to another hospital, or already deleted",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized — missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    void deletePatient(
+            @Parameter(description = "Patient UUID", required = true)
+            @PathVariable UUID patientId,
             HttpServletRequest request);
 }

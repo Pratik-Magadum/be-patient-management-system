@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.patient.serviceImpl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
 import com.eyehospital.pms.module.appointment.repository.AppointmentSpecification;
@@ -58,26 +60,26 @@ public class PatientServiceImpl implements PatientService {
         if (fromDate.isEqual(toDate)) {
             // Single-date queries (existing optimised methods)
             totalPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDate(hospitalId, fromDate);
+                    .countByHospitalIdAndAppointmentDateAndPatientDeletedFalse(hospitalId, fromDate);
             newPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, fromDate, "NEW_VISIT");
+                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, "NEW_VISIT");
             followUpPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndVisitType(hospitalId, fromDate, "FOLLOW_UP");
+                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndStatus(hospitalId, fromDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateAndStatusAndPatientDeletedFalse(hospitalId, fromDate, "COMPLETED");
         } else {
             // Date-range queries
             totalPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetween(hospitalId, fromDate, toDate);
+                    .countByHospitalIdAndAppointmentDateBetweenAndPatientDeletedFalse(hospitalId, fromDate, toDate);
             newPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndVisitType(hospitalId, fromDate, toDate, "NEW_VISIT");
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, toDate, "NEW_VISIT");
             followUpPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndVisitType(hospitalId, fromDate, toDate, "FOLLOW_UP");
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, toDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndStatus(hospitalId, fromDate, toDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateBetweenAndStatusAndPatientDeletedFalse(hospitalId, fromDate, toDate, "COMPLETED");
         }
 
-        long totalRegisteredPatients = patientRepository.countByHospitalId(hospitalId);
+        long totalRegisteredPatients = patientRepository.countByHospitalIdAndDeletedFalse(hospitalId);
 
         return PatientDashboardResponseDto.builder()
                 .date(fromDate)
@@ -93,13 +95,14 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public PatientSearchListResponseDto getPatients(UUID hospitalId, PatientSearchRequestDto request) {
 
-        Specification<Appointment> spec = Specification
-                .where(AppointmentSpecification.hasHospitalId(hospitalId));
-
-        int page = 0;
-        int size = 10;
         LocalDate fromDate = null;
         LocalDate toDate = null;
+        int page = 0;
+        int size = 10;
+
+        Specification<Appointment> spec = Specification
+                .where(AppointmentSpecification.hasHospitalId(hospitalId))
+                .and(AppointmentSpecification.patientNotDeleted());
 
         if (request != null) {
             page = request.getPage();
@@ -163,7 +166,8 @@ public class PatientServiceImpl implements PatientService {
         log.debug("Searching by name/phone for hospitalId={} name={} phoneNumber={}", hospitalId, name, phoneNumber);
 
         Specification<Appointment> spec = Specification
-                .where(AppointmentSpecification.hasHospitalId(hospitalId));
+                .where(AppointmentSpecification.hasHospitalId(hospitalId))
+                .and(AppointmentSpecification.patientNotDeleted());
 
         if (name != null && !name.isBlank()) {
             spec = spec.and(AppointmentSpecification.patientNameContains(name.trim()));
@@ -180,12 +184,32 @@ public class PatientServiceImpl implements PatientService {
     }
 
     // -----------------------------------------------------------------------
+    // Soft delete
+    // -----------------------------------------------------------------------
+
+    @Override
+    @Transactional
+    public void softDeletePatient(UUID hospitalId, UUID patientId) {
+        Patient patient = patientRepository
+                .findByPatientIdAndHospitalIdAndDeletedFalse(patientId, hospitalId)
+                .orElseThrow(() -> new BusinessException("PATIENT_NOT_FOUND",
+                        "Patient not found, already deleted, or belongs to another hospital"));
+
+        patient.setDeleted(true);
+        patient.setDeletedAt(LocalDateTime.now());
+        patientRepository.save(patient);
+
+        log.info("Soft-deleted patient {} for hospital {}", patientId, hospitalId);
+    }
+
+    // -----------------------------------------------------------------------
     // Private mapping helpers
     // -----------------------------------------------------------------------
 
     private PatientSearchResponseDto toSearchResponseDto(Appointment appointment) {
         Patient patient = appointment.getPatient();
         return PatientSearchResponseDto.builder()
+                .patientId(patient.getPatientId())
                 .patientNumber(patient.getPatientNumber())
                 .patientName(patient.getFullName())
                 .mobileNumber(patient.getMobileNumber())

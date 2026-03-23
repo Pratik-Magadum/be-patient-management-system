@@ -52,4 +52,12 @@ public interface PatientService {
      * @return list of matching patient–appointment records
      */
     List<PatientSearchResponseDto> searchByNamePhone(UUID hospitalId, String name, String phoneNumber);
+
+    /**
+     * Soft-deletes a patient by setting {@code is_deleted = true} and recording {@code deleted_at}.
+     *
+     * @param hospitalId the tenant hospital identifier
+     * @param patientId  the patient to delete
+     */
+    void softDeletePatient(UUID hospitalId, UUID patientId);
 }
