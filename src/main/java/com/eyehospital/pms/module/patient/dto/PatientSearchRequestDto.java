@@ -35,6 +35,14 @@ public class PatientSearchRequestDto {
             + "Must be equal to or after fromDate.", example = "2026-03-19")
     private LocalDate toDate;
 
+    @Schema(description = "Filter by appointment status (REGISTERED, IN_PROGRESS, COMPLETED). "
+            + "When not provided, returns all statuses.", example = "COMPLETED")
+    private String patientStatus;
+
+    @Schema(description = "Filter by visit type (NEW_VISIT, FOLLOW_UP). "
+            + "When not provided, returns all visit types.", example = "NEW_VISIT")
+    private String visitType;
+
     @Builder.Default
     @Schema(description = "Page number (0-based)", example = "0")
     private int page = 0;

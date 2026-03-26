@@ -43,6 +43,14 @@ public final class AppointmentSpecification {
         };
     }
 
+    public static Specification<Appointment> hasStatus(String status) {
+        return (root, query, cb) -> cb.equal(root.get("status"), status);
+    }
+
+    public static Specification<Appointment> hasVisitType(String visitType) {
+        return (root, query, cb) -> cb.equal(root.get("visitType"), visitType);
+    }
+
     public static Specification<Appointment> onDate(LocalDate date) {
         return (root, query, cb) -> cb.equal(root.get("appointmentDate"), date);
     }

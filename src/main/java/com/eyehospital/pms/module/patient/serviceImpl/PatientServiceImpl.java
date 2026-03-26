@@ -131,6 +131,14 @@ public class PatientServiceImpl implements PatientService {
                     hospitalId, fromDate, toDate, page, size);
         }
 
+        // Optional status and visit-type filters
+        if (request != null && request.getPatientStatus() != null && !request.getPatientStatus().isBlank()) {
+            spec = spec.and(AppointmentSpecification.hasStatus(request.getPatientStatus().trim()));
+        }
+        if (request != null && request.getVisitType() != null && !request.getVisitType().isBlank()) {
+            spec = spec.and(AppointmentSpecification.hasVisitType(request.getVisitType().trim()));
+        }
+
         spec = spec.and(AppointmentSpecification.orderByStatusThenDateTimeAsc());
 
         Pageable pageable = PageRequest.of(page, size);

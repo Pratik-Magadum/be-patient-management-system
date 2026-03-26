@@ -668,6 +668,190 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     }
 
     // =======================================================================
+    // Filter by patientStatus and visitType
+    // =======================================================================
+
+    @Nested
+    @DisplayName("GET /api/v1/patients/by-dates — filter by patientStatus and visitType")
+    class FilterByStatusAndType {
+
+        @Test
+        @DisplayName("no patientStatus or visitType returns all patients for the date")
+        void getPatients_NoFilters_ReturnsAll() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("All Filter P1", "+91-9100000001");
+            Patient p2 = createPatient("All Filter P2", "+91-9100000002");
+            Patient p3 = createPatient("All Filter P3", "+91-9100000003");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "COMPLETED", today, LocalTime.of(10, 0));
+            createAppointment(p3, "NEW_VISIT", "IN_PROGRESS", today, LocalTime.of(11, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(3));
+        }
+
+        @Test
+        @DisplayName("patientStatus=COMPLETED returns only completed appointments")
+        void getPatients_StatusCompleted_ReturnsOnlyCompleted() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("Completed P", "+91-9110000001");
+            Patient p2 = createPatient("Registered P", "+91-9110000002");
+            createAppointment(p1, "NEW_VISIT", "COMPLETED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("patientStatus", "COMPLETED")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Completed P"))
+                    .andExpect(jsonPath("$.patients[0].appointmentStatus").value("COMPLETED"));
+        }
+
+        @Test
+        @DisplayName("patientStatus=REGISTERED returns only registered appointments")
+        void getPatients_StatusRegistered_ReturnsOnlyRegistered() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("Reg P", "+91-9120000001");
+            Patient p2 = createPatient("Comp P", "+91-9120000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "COMPLETED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("patientStatus", "REGISTERED")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Reg P"));
+        }
+
+        @Test
+        @DisplayName("patientStatus=IN_PROGRESS returns only in-progress appointments")
+        void getPatients_StatusInProgress_ReturnsOnlyInProgress() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("InProg P", "+91-9130000001");
+            Patient p2 = createPatient("Done P", "+91-9130000002");
+            createAppointment(p1, "NEW_VISIT", "IN_PROGRESS", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "COMPLETED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("patientStatus", "IN_PROGRESS")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("InProg P"));
+        }
+
+        @Test
+        @DisplayName("visitType=NEW_VISIT returns only new visit appointments")
+        void getPatients_TypeNewVisit_ReturnsOnlyNewVisits() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("New Visit P", "+91-9140000001");
+            Patient p2 = createPatient("FollowUp P", "+91-9140000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "FOLLOW_UP", "REGISTERED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("visitType", "NEW_VISIT")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("New Visit P"))
+                    .andExpect(jsonPath("$.patients[0].visitType").value("NEW_VISIT"));
+        }
+
+        @Test
+        @DisplayName("visitType=FOLLOW_UP returns only follow-up appointments")
+        void getPatients_TypeFollowUp_ReturnsOnlyFollowUps() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("FU P", "+91-9150000001");
+            Patient p2 = createPatient("New P", "+91-9150000002");
+            createAppointment(p1, "FOLLOW_UP", "REGISTERED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("visitType", "FOLLOW_UP")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    // FOLLOW_UP creates parent appointment on same date-7days, so only 1 on today
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("FU P"))
+                    .andExpect(jsonPath("$.patients[0].visitType").value("FOLLOW_UP"));
+        }
+
+        @Test
+        @DisplayName("both patientStatus and visitType filter together (AND logic)")
+        void getPatients_StatusAndType_CombinesFilters() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("New Comp P", "+91-9160000001");
+            Patient p2 = createPatient("New Reg P", "+91-9160000002");
+            Patient p3 = createPatient("FU Comp P", "+91-9160000003");
+            createAppointment(p1, "NEW_VISIT", "COMPLETED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", today, LocalTime.of(10, 0));
+            createAppointment(p3, "FOLLOW_UP", "COMPLETED", today, LocalTime.of(11, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("patientStatus", "COMPLETED")
+                            .param("visitType", "NEW_VISIT")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("New Comp P"));
+        }
+
+        @Test
+        @DisplayName("patientStatus filter works with date range")
+        void getPatients_StatusWithDateRange_FiltersCorrectly() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("Range Comp P", "+91-9170000001");
+            Patient p2 = createPatient("Range Reg P", "+91-9170000002");
+            Patient p3 = createPatient("OutOfRange P", "+91-9170000003");
+            createAppointment(p1, "NEW_VISIT", "COMPLETED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "NEW_VISIT", "REGISTERED", today.plusDays(1), LocalTime.of(10, 0));
+            createAppointment(p3, "NEW_VISIT", "COMPLETED", today.plusDays(10), LocalTime.of(11, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("fromDate", today.toString())
+                            .param("toDate", today.plusDays(3).toString())
+                            .param("patientStatus", "COMPLETED")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Range Comp P"));
+        }
+
+        @Test
+        @DisplayName("visitType filter works with date range")
+        void getPatients_TypeWithDateRange_FiltersCorrectly() throws Exception {
+            LocalDate today = LocalDate.now();
+            Patient p1 = createPatient("Range New P", "+91-9180000001");
+            Patient p2 = createPatient("Range FU P", "+91-9180000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", today, LocalTime.of(9, 0));
+            createAppointment(p2, "FOLLOW_UP", "REGISTERED", today, LocalTime.of(10, 0));
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .param("fromDate", today.toString())
+                            .param("toDate", today.plusDays(1).toString())
+                            .param("visitType", "NEW_VISIT")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Range New P"));
+        }
+    }
+
+    // =======================================================================
     // Soft delete patient
     // =======================================================================
 
