@@ -125,7 +125,7 @@ public class PatientControllerImpl implements PatientController {
     public void deletePatient(UUID patientId, HttpServletRequest request) {
         UUID hospitalId = extractHospitalId(request);
         log.info("DELETE /patients/{} - hospitalId={}", patientId, hospitalId);
-        patientService.softDeletePatient(hospitalId, patientId);
+        patientService.deletePatient(hospitalId, patientId);
     }
 
     // -----------------------------------------------------------------------

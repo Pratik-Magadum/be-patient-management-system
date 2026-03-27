@@ -165,35 +165,34 @@ public interface PatientController {
             HttpServletRequest request);
 
     /**
-     * Soft-deletes a patient by ID.
+     * Soft-deletes a patient and all associated appointments.
      *
-     * @param patientId the patient UUID
+     * @param patientId the UUID of the patient to delete
      * @param request   the HTTP request (used to extract hospitalId from JWT)
      */
-    @DeleteMapping(ApiConstants.PATIENT_DELETE)
+    @DeleteMapping(ApiConstants.PATIENT_BY_ID)
     @Operation(
             summary     = "Soft-delete a patient",
-            description = "Marks a patient as deleted (is_deleted=true) without physically removing the record. "
-                        + "Deleted patients are excluded from all search and dashboard results."
+            description = "Marks the patient and all associated appointments as deleted. "
+                        + "The patient must belong to the authenticated user\u2019s hospital."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description  = "Patient soft-deleted successfully"
+                    description  = "Patient and appointments soft-deleted successfully"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description  = "Patient not found, belongs to another hospital, or already deleted",
+                    description  = "Patient not found or already deleted",
                     content      = @Content(schema = @Schema(hidden = true))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
-                    description  = "Unauthorized — missing or invalid JWT token",
+                    description  = "Unauthorized \u2014 missing or invalid JWT token",
                     content      = @Content(schema = @Schema(hidden = true))
             )
     })
     void deletePatient(
-            @Parameter(description = "Patient UUID", required = true)
-            @PathVariable UUID patientId,
+            @Parameter(description = "Patient UUID") @PathVariable UUID patientId,
             HttpServletRequest request);
 }

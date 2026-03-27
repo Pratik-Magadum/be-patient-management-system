@@ -1,5 +1,6 @@
 package com.eyehospital.pms.module.appointment.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -45,7 +46,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                     "Cannot create follow-up for a deleted patient");
         }
 
-        // 4. Create follow-up appointment
+        // 4. Check if a follow-up already exists for this parent (not completed)
+        if (appointmentRepository.existsByParentAppointmentAndStatusNotAndDeletedFalse(parent, "COMPLETED")) {
+            throw new BusinessException("FOLLOW_UP_ALREADY_EXISTS",
+                    "A follow-up appointment already exists for this parent appointment");
+        }
+
+        // 5. Create follow-up appointment
         Appointment followUp = new Appointment();
         followUp.setHospitalId(hospitalId);
         followUp.setPatient(patient);
@@ -62,6 +69,21 @@ public class AppointmentServiceImpl implements AppointmentService {
                 followUp.getAppointmentId(), parent.getAppointmentId(), hospitalId);
 
         return toSearchResponseDto(followUp, patient);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAppointment(UUID hospitalId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository
+                .findByAppointmentIdAndHospitalIdAndDeletedFalse(appointmentId, hospitalId)
+                .orElseThrow(() -> new BusinessException("APPOINTMENT_NOT_FOUND",
+                        "Appointment not found, already deleted, or belongs to another hospital"));
+
+        appointment.setDeleted(true);
+        appointment.setDeletedAt(LocalDateTime.now());
+        appointmentRepository.save(appointment);
+
+        log.info("Soft-deleted appointment {} for hospital {}", appointmentId, hospitalId);
     }
 
     private PatientSearchResponseDto toSearchResponseDto(Appointment appointment, Patient patient) {

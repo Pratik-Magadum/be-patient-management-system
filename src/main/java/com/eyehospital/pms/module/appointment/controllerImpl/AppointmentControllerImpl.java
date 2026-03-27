@@ -30,6 +30,13 @@ public class AppointmentControllerImpl implements AppointmentController {
         return appointmentService.registerFollowUp(hospitalId, request);
     }
 
+    @Override
+    public void deleteAppointment(UUID appointmentId, HttpServletRequest httpRequest) {
+        UUID hospitalId = extractHospitalId(httpRequest);
+        log.info("DELETE /appointments/{} - hospitalId={}", appointmentId, hospitalId);
+        appointmentService.deleteAppointment(hospitalId, appointmentId);
+    }
+
     private UUID extractHospitalId(HttpServletRequest request) {
         String hospitalIdStr = (String) request.getAttribute("hospitalId");
         if (hospitalIdStr == null) {

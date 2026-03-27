@@ -28,6 +28,10 @@ public final class AppointmentSpecification {
         };
     }
 
+    public static Specification<Appointment> appointmentNotDeleted() {
+        return (root, query, cb) -> cb.equal(root.get("deleted"), false);
+    }
+
     public static Specification<Appointment> patientNameContains(String name) {
         return (root, query, cb) -> {
             Join<Appointment, Patient> patient = root.join("patient");

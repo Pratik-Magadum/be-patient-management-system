@@ -853,19 +853,20 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
     }
 
     // =======================================================================
-    // Soft delete patient
+    // Soft delete patient and appointments
     // =======================================================================
 
     @Nested
-    @DisplayName("DELETE /api/v1/patients/{patientId} — soft delete")
-    class SoftDeletePatient {
+    @DisplayName("DELETE /api/v1/patients/{patientId} \u2014 soft delete patient and appointments")
+    class DeletePatient {
 
         private static final String DELETE_URL = ApiConstants.PATIENTS;
 
         @Test
-        @DisplayName("returns 200 when patient is soft-deleted successfully")
+        @DisplayName("returns 200 when patient and appointments are soft-deleted successfully")
         void deletePatient_ValidPatient_Returns200() throws Exception {
             Patient p = createPatient("Delete Me", "+91-5000000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
 
             mockMvc.perform(delete(DELETE_URL + "/" + p.getPatientId())
                             .requestAttr("hospitalId", hospitalId.toString())
@@ -881,7 +882,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
             createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
             createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
 
-            // Soft delete p2
+            // Soft-delete p2 and its appointments
             mockMvc.perform(delete(DELETE_URL + "/" + p2.getPatientId())
                             .requestAttr("hospitalId", hospitalId.toString()))
                     .andExpect(status().isOk());
@@ -978,6 +979,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
         @DisplayName("returns 409 when patient is already deleted")
         void deletePatient_AlreadyDeleted_Returns409() throws Exception {
             Patient p = createPatient("Already Deleted", "+91-5500000001");
+            createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
 
             // First delete — should succeed
             mockMvc.perform(delete(DELETE_URL + "/" + p.getPatientId())
@@ -986,6 +988,157 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
 
             // Second delete — should fail
             mockMvc.perform(delete(DELETE_URL + "/" + p.getPatientId())
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict());
+        }
+    }
+
+    // =======================================================================
+    // Soft delete appointment
+    // =======================================================================
+
+    @Nested
+    @DisplayName("DELETE /api/v1/appointments/{appointmentId} — soft delete appointment")
+    class DeleteAppointment {
+
+        private static final String DELETE_URL = ApiConstants.APPOINTMENTS;
+
+        @Test
+        @DisplayName("returns 200 when appointment is soft-deleted successfully")
+        void deleteAppointment_Valid_Returns200() throws Exception {
+            Patient p = createPatient("Appt Delete", "+91-6000000001");
+            Appointment a = createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            mockMvc.perform(delete(DELETE_URL + "/" + a.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("soft-deleted appointment is excluded from search results")
+        void deleteAppointment_Deleted_ExcludedFromSearch() throws Exception {
+            Patient p1 = createPatient("Active Appt", "+91-6100000001");
+            Patient p2 = createPatient("Deleted Appt", "+91-6100000002");
+            Appointment a1 = createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            Appointment a2 = createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
+
+            // Soft-delete a2
+            mockMvc.perform(delete(DELETE_URL + "/" + a2.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString()))
+                    .andExpect(status().isOk());
+
+            // Search should only return active appointment
+            mockMvc.perform(get(SEARCH_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients.length()").value(1))
+                    .andExpect(jsonPath("$.patients[0].patientName").value("Active Appt"))
+                    .andExpect(jsonPath("$.totalPatients").value(1));
+        }
+
+        @Test
+        @DisplayName("soft-deleted appointment is excluded from name/phone search")
+        void deleteAppointment_Deleted_ExcludedFromNamePhoneSearch() throws Exception {
+            Patient p1 = createPatient("Visible Appt", "+91-6200000001");
+            Patient p2 = createPatient("Hidden Appt", "+91-6200000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            Appointment a2 = createAppointment(p2, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(10, 0));
+
+            mockMvc.perform(delete(DELETE_URL + "/" + a2.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString()))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get(ApiConstants.PATIENTS + ApiConstants.PATIENT_SEARCH_BY_NAME_PHONE)
+                            .param("name", "Appt")
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].patientName").value("Visible Appt"));
+        }
+
+        @Test
+        @DisplayName("soft-deleted appointment is excluded from dashboard counts")
+        void deleteAppointment_Deleted_ExcludedFromDashboardCounts() throws Exception {
+            Patient p1 = createPatient("Dash Active Appt", "+91-6300000001");
+            Patient p2 = createPatient("Dash Deleted Appt", "+91-6300000002");
+            createAppointment(p1, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+            Appointment a2 = createAppointment(p2, "NEW_VISIT", "COMPLETED", LocalDate.now(), LocalTime.of(10, 0));
+
+            mockMvc.perform(delete(DELETE_URL + "/" + a2.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString()))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get(SEARCH_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalPatients").value(1))
+                    .andExpect(jsonPath("$.completedPatients").value(0));
+        }
+
+        @Test
+        @DisplayName("returns 409 when appointment does not exist")
+        void deleteAppointment_NotFound_Returns409() throws Exception {
+            UUID nonExistentId = UUID.randomUUID();
+
+            mockMvc.perform(delete(DELETE_URL + "/" + nonExistentId)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("returns 409 when deleting appointment from another hospital")
+        void deleteAppointment_WrongTenant_Returns409() throws Exception {
+            Hospital otherHospital = new Hospital();
+            otherHospital.setName("Other Appt Hospital");
+            otherHospital.setSubdomain("other-appt-" + UUID.randomUUID().toString().substring(0, 8));
+            otherHospital.setAddress("789 Other Street");
+            otherHospital.setContactEmail("other-appt@del.com");
+            otherHospital.setContactPhone("+91-8888888888");
+            otherHospital.setActive(true);
+            otherHospital = hospitalRepository.saveAndFlush(otherHospital);
+
+            Patient otherPatient = new Patient();
+            otherPatient.setHospital(otherHospital);
+            otherPatient.setFullName("Other Appt Patient");
+            otherPatient.setMobileNumber("+91-6400000001");
+            otherPatient.setAge(35);
+            otherPatient.setGender("MALE");
+            otherPatient = patientRepository.saveAndFlush(otherPatient);
+
+            Appointment otherAppt = new Appointment();
+            otherAppt.setHospitalId(otherHospital.getHospitalId());
+            otherAppt.setPatient(otherPatient);
+            otherAppt.setVisitType("NEW_VISIT");
+            otherAppt.setStatus("REGISTERED");
+            otherAppt.setAppointmentDate(LocalDate.now());
+            otherAppt.setAppointmentTime(LocalTime.of(9, 0));
+            otherAppt = appointmentRepository.saveAndFlush(otherAppt);
+
+            mockMvc.perform(delete(DELETE_URL + "/" + otherAppt.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("returns 409 when appointment is already deleted")
+        void deleteAppointment_AlreadyDeleted_Returns409() throws Exception {
+            Patient p = createPatient("Already Del Appt", "+91-6500000001");
+            Appointment a = createAppointment(p, "NEW_VISIT", "REGISTERED", LocalDate.now(), LocalTime.of(9, 0));
+
+            // First delete — should succeed
+            mockMvc.perform(delete(DELETE_URL + "/" + a.getAppointmentId())
+                            .requestAttr("hospitalId", hospitalId.toString()))
+                    .andExpect(status().isOk());
+
+            // Second delete — should fail
+            mockMvc.perform(delete(DELETE_URL + "/" + a.getAppointmentId())
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isConflict());

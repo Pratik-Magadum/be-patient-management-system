@@ -18,4 +18,12 @@ public interface AppointmentService {
      * @return the newly created follow-up appointment details
      */
     PatientSearchResponseDto registerFollowUp(UUID hospitalId, FollowUpRequestDto request);
+
+    /**
+     * Soft-deletes an appointment by setting is_deleted = true.
+     *
+     * @param hospitalId    the tenant hospital identifier
+     * @param appointmentId the appointment to delete
+     */
+    void deleteAppointment(UUID hospitalId, UUID appointmentId);
 }

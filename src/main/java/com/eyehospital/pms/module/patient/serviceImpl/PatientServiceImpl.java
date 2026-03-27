@@ -58,25 +58,25 @@ public class PatientServiceImpl implements PatientService {
         long completedPatients;
 
         if (fromDate.isEqual(toDate)) {
-            // Single-date queries (existing optimised methods)
+            // Single-date queries
             totalPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndPatientDeletedFalse(hospitalId, fromDate);
+                    .countByHospitalIdAndAppointmentDateAndDeletedFalse(hospitalId, fromDate);
             newPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, "NEW_VISIT");
+                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndDeletedFalse(hospitalId, fromDate, "NEW_VISIT");
             followUpPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, "FOLLOW_UP");
+                    .countByHospitalIdAndAppointmentDateAndVisitTypeAndDeletedFalse(hospitalId, fromDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndStatusAndPatientDeletedFalse(hospitalId, fromDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateAndStatusAndDeletedFalse(hospitalId, fromDate, "COMPLETED");
         } else {
             // Date-range queries
             totalPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndPatientDeletedFalse(hospitalId, fromDate, toDate);
+                    .countByHospitalIdAndAppointmentDateBetweenAndDeletedFalse(hospitalId, fromDate, toDate);
             newPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, toDate, "NEW_VISIT");
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndDeletedFalse(hospitalId, fromDate, toDate, "NEW_VISIT");
             followUpPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(hospitalId, fromDate, toDate, "FOLLOW_UP");
+                    .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndDeletedFalse(hospitalId, fromDate, toDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndStatusAndPatientDeletedFalse(hospitalId, fromDate, toDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateBetweenAndStatusAndDeletedFalse(hospitalId, fromDate, toDate, "COMPLETED");
         }
 
         long totalRegisteredPatients = patientRepository.countByHospitalIdAndDeletedFalse(hospitalId);
@@ -102,7 +102,7 @@ public class PatientServiceImpl implements PatientService {
 
         Specification<Appointment> spec = Specification
                 .where(AppointmentSpecification.hasHospitalId(hospitalId))
-                .and(AppointmentSpecification.patientNotDeleted());
+                .and(AppointmentSpecification.appointmentNotDeleted());
 
         if (request != null) {
             page = request.getPage();
@@ -175,7 +175,7 @@ public class PatientServiceImpl implements PatientService {
 
         Specification<Appointment> spec = Specification
                 .where(AppointmentSpecification.hasHospitalId(hospitalId))
-                .and(AppointmentSpecification.patientNotDeleted());
+                .and(AppointmentSpecification.appointmentNotDeleted());
 
         if (name != null && !name.isBlank()) {
             spec = spec.and(AppointmentSpecification.patientNameContains(name.trim()));
@@ -192,22 +192,25 @@ public class PatientServiceImpl implements PatientService {
     }
 
     // -----------------------------------------------------------------------
-    // Soft delete
+    // Soft-delete patient and appointments
     // -----------------------------------------------------------------------
 
     @Override
     @Transactional
-    public void softDeletePatient(UUID hospitalId, UUID patientId) {
-        Patient patient = patientRepository
-                .findByPatientIdAndHospitalIdAndDeletedFalse(patientId, hospitalId)
+    public void deletePatient(UUID hospitalId, UUID patientId) {
+        Patient patient = patientRepository.findByPatientIdAndHospitalIdAndDeletedFalse(patientId, hospitalId)
                 .orElseThrow(() -> new BusinessException("PATIENT_NOT_FOUND",
-                        "Patient not found, already deleted, or belongs to another hospital"));
+                        "Patient not found or already deleted"));
 
+        // Soft-delete all non-deleted appointments for this patient
+        appointmentRepository.softDeleteByPatientId(patientId);
+
+        // Soft-delete the patient
         patient.setDeleted(true);
         patient.setDeletedAt(LocalDateTime.now());
         patientRepository.save(patient);
 
-        log.info("Soft-deleted patient {} for hospital {}", patientId, hospitalId);
+        log.info("Soft-deleted patient {} and appointments for hospitalId={}", patientId, hospitalId);
     }
 
     // -----------------------------------------------------------------------

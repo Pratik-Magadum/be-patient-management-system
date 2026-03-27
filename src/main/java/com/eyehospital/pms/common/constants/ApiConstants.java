@@ -36,7 +36,6 @@ public final class ApiConstants {
     public static final String PATIENT_BY_ID         = "/{patientId}";
     public static final String PATIENT_BY_DATES      = "/by-dates";
     public static final String PATIENT_SEARCH_BY_NAME_PHONE = "/search/by-name-phone";
-    public static final String PATIENT_DELETE         = "/{patientId}";
     public static final String PATIENT_DASHBOARD_TODAY = "/dashboard/today";
 
     // -----------------------------------------------------------------------
@@ -44,6 +43,7 @@ public final class ApiConstants {
     // -----------------------------------------------------------------------
     public static final String APPOINTMENTS          = API_BASE + V1 + "/appointments";
     public static final String APPOINTMENT_FOLLOW_UP  = "/follow-up";
+    public static final String APPOINTMENT_DELETE     = "/{appointmentId}";
 
     // -----------------------------------------------------------------------
     // Consultation module

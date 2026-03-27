@@ -6,6 +6,9 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.eyehospital.pms.module.appointment.entity.Appointment;
@@ -23,6 +26,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID>,
      * Finds an appointment by ID and hospital (tenant isolation).
      */
     Optional<Appointment> findByAppointmentIdAndHospitalId(UUID appointmentId, UUID hospitalId);
+
+    /**
+     * Finds a non-deleted appointment by ID and hospital (tenant isolation).
+     */
+    Optional<Appointment> findByAppointmentIdAndHospitalIdAndDeletedFalse(UUID appointmentId, UUID hospitalId);
+
+    /**
+     * Checks whether a follow-up already exists for the given parent appointment.
+     */
+    boolean existsByParentAppointmentAndStatusNotAndDeletedFalse(Appointment parentAppointment, String status);
 
     /**
      * Counts all appointments for a given hospital on a specific date.
@@ -54,19 +67,27 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID>,
      */
     long countByHospitalIdAndAppointmentDateBetweenAndStatus(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
 
+    /**
+     * Soft-deletes all non-deleted appointments belonging to a given patient.
+     */
+    @Modifying
+    @Query("UPDATE Appointment a SET a.deleted = true, a.deletedAt = CURRENT_TIMESTAMP "
+         + "WHERE a.patient.patientId = :patientId AND a.deleted = false")
+    void softDeleteByPatientId(@Param("patientId") UUID patientId);
+
     // -----------------------------------------------------------------------
-    // Count methods excluding soft-deleted patients
+    // Count methods excluding soft-deleted appointments
     // -----------------------------------------------------------------------
 
-    long countByHospitalIdAndAppointmentDateAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate);
+    long countByHospitalIdAndAppointmentDateAndDeletedFalse(UUID hospitalId, LocalDate appointmentDate);
 
-    long countByHospitalIdAndAppointmentDateAndVisitTypeAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String visitType);
+    long countByHospitalIdAndAppointmentDateAndVisitTypeAndDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String visitType);
 
-    long countByHospitalIdAndAppointmentDateAndStatusAndPatientDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String status);
+    long countByHospitalIdAndAppointmentDateAndStatusAndDeletedFalse(UUID hospitalId, LocalDate appointmentDate, String status);
 
-    long countByHospitalIdAndAppointmentDateBetweenAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate);
+    long countByHospitalIdAndAppointmentDateBetweenAndDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate);
 
-    long countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String visitType);
+    long countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String visitType);
 
-    long countByHospitalIdAndAppointmentDateBetweenAndStatusAndPatientDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
+    long countByHospitalIdAndAppointmentDateBetweenAndStatusAndDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
 }

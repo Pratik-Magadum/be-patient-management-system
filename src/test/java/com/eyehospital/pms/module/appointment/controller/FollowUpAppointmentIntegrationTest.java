@@ -313,6 +313,31 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
                             .content(followUpRequestJson(parent.getAppointmentId(), LocalDate.now().plusDays(1), LocalTime.of(10, 0), null)))
                     .andExpect(status().isConflict());
         }
+
+        @Test
+        @DisplayName("returns 409 when a follow-up already exists for the parent appointment")
+        void registerFollowUp_AlreadyExists_Returns409() throws Exception {
+            Patient patient = createPatient("Duplicate FU Patient", "+91-9200000004");
+            Appointment parent = createCompletedNewVisit(patient, LocalDate.now().minusDays(7), LocalTime.of(9, 0));
+
+            // Create an existing follow-up (REGISTERED) for this parent
+            Appointment existingFollowUp = new Appointment();
+            existingFollowUp.setHospitalId(hospitalId);
+            existingFollowUp.setPatient(patient);
+            existingFollowUp.setAppointmentDate(LocalDate.now().plusDays(1));
+            existingFollowUp.setAppointmentTime(LocalTime.of(10, 0));
+            existingFollowUp.setVisitType("FOLLOW_UP");
+            existingFollowUp.setStatus("REGISTERED");
+            existingFollowUp.setParentAppointment(parent);
+            appointmentRepository.saveAndFlush(existingFollowUp);
+
+            // Attempt to create another follow-up for the same parent
+            mockMvc.perform(post(FOLLOW_UP_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(followUpRequestJson(parent.getAppointmentId(), LocalDate.now().plusDays(2), LocalTime.of(11, 0), null)))
+                    .andExpect(status().isConflict());
+        }
     }
 
     // =======================================================================

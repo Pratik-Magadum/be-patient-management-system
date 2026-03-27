@@ -54,10 +54,10 @@ public interface PatientService {
     List<PatientSearchResponseDto> searchByNamePhone(UUID hospitalId, String name, String phoneNumber);
 
     /**
-     * Soft-deletes a patient by setting {@code is_deleted = true} and recording {@code deleted_at}.
+     * Soft-deletes a patient and all associated appointments.
      *
      * @param hospitalId the tenant hospital identifier
-     * @param patientId  the patient to delete
+     * @param patientId  the patient to soft-delete
      */
-    void softDeletePatient(UUID hospitalId, UUID patientId);
+    void deletePatient(UUID hospitalId, UUID patientId);
 }
