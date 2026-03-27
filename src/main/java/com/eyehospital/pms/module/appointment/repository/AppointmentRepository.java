@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.appointment.repository;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,11 @@ import com.eyehospital.pms.module.appointment.entity.Appointment;
  */
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID>, JpaSpecificationExecutor<Appointment> {
+
+    /**
+     * Finds an appointment by ID and hospital (tenant isolation).
+     */
+    Optional<Appointment> findByAppointmentIdAndHospitalId(UUID appointmentId, UUID hospitalId);
 
     /**
      * Counts all appointments for a given hospital on a specific date.

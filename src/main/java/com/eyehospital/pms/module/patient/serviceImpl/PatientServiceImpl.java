@@ -217,6 +217,7 @@ public class PatientServiceImpl implements PatientService {
     private PatientSearchResponseDto toSearchResponseDto(Appointment appointment) {
         Patient patient = appointment.getPatient();
         return PatientSearchResponseDto.builder()
+                .appointmentId(appointment.getAppointmentId())
                 .patientId(patient.getPatientId())
                 .patientNumber(patient.getPatientNumber())
                 .patientName(patient.getFullName())
@@ -230,6 +231,7 @@ public class PatientServiceImpl implements PatientService {
                 .appointmentDate(appointment.getAppointmentDate())
                 .appointmentTime(appointment.getAppointmentTime())
                 .appointmentStatus(appointment.getStatus())
+                .notes(appointment.getNotes())
                 .build();
     }
 }

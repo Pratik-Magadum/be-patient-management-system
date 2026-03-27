@@ -43,6 +43,7 @@ public final class ApiConstants {
     // Appointment module
     // -----------------------------------------------------------------------
     public static final String APPOINTMENTS          = API_BASE + V1 + "/appointments";
+    public static final String APPOINTMENT_FOLLOW_UP  = "/follow-up";
 
     // -----------------------------------------------------------------------
     // Consultation module

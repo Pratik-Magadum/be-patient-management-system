@@ -725,7 +725,7 @@ class AuthControllerTest extends BaseIntegrationTest {
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{invalid json"))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -733,7 +733,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         void login_NoBody_ReturnsError() throws Exception {
             mockMvc.perform(post(LOGIN_URL)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
     }
 

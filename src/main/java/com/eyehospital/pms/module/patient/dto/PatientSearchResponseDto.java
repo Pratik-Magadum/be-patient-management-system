@@ -17,11 +17,14 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-@JsonPropertyOrder({"patientId", "patientNumber", "patientName", "mobileNumber", "age", "gender",
+@JsonPropertyOrder({"appointmentId", "patientId", "patientNumber", "patientName", "mobileNumber", "age", "gender",
         "email", "dateOfBirth", "address", "visitType", "appointmentDate",
-        "appointmentTime", "appointmentStatus"})
+        "appointmentTime", "appointmentStatus", "notes"})
 @Schema(description = "Patient search result with full patient and appointment details")
 public class PatientSearchResponseDto {
+
+    @Schema(description = "Appointment unique identifier", example = "f1e2d3c4-b5a6-7890-abcd-ef1234567890")
+    private final UUID appointmentId;
 
     @Schema(description = "Patient unique identifier", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     private final UUID patientId;
@@ -61,4 +64,7 @@ public class PatientSearchResponseDto {
 
     @Schema(description = "Appointment status: REGISTERED, IN_PROGRESS, or COMPLETED", example = "REGISTERED")
     private final String appointmentStatus;
+
+    @Schema(description = "Appointment notes", example = "Follow-up checkup")
+    private final String notes;
 }

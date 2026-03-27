@@ -652,6 +652,7 @@ class PatientSearchIntegrationTest extends BaseIntegrationTest {
                             .requestAttr("hospitalId", hospitalId.toString())
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.patients[0].appointmentId").exists())
                     .andExpect(jsonPath("$.patients[0].patientId").exists())
                     .andExpect(jsonPath("$.patients[0].patientName").value("Fields Patient"))
                     .andExpect(jsonPath("$.patients[0].mobileNumber").value("+91-3100000001"))

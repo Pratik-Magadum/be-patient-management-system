@@ -56,6 +56,7 @@ public class Patient {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments = new ArrayList<>();
 
+    @Generated(event = {EventType.INSERT})
     @Column(name = "patient_number", unique = true, nullable = false, insertable = false, updatable = false)
     private String patientNumber;
 
