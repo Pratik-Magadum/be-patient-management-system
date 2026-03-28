@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.appointment.controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -32,7 +33,9 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
  * {@link BaseIntegrationTest}) so these tests focus purely on the follow-up
  * registration business logic and validation.</p>
  */
-@DisplayName("AppointmentController — Follow-Up Registration Integration Tests")@AutoConfigureMockMvc(addFilters = false)class FollowUpAppointmentIntegrationTest extends BaseIntegrationTest {
+@DisplayName("AppointmentController — Follow-Up Registration Integration Tests")
+@AutoConfigureMockMvc(addFilters = false)
+class FollowUpAppointmentIntegrationTest extends BaseIntegrationTest {
 
     private static final String FOLLOW_UP_URL =
             ApiConstants.APPOINTMENTS + ApiConstants.APPOINTMENT_FOLLOW_UP;
@@ -73,15 +76,23 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
         return patientRepository.saveAndFlush(patient);
     }
 
-    private Appointment createCompletedNewVisit(Patient patient, LocalDate date, LocalTime time) {
+    private Appointment createAppointment(Patient patient, LocalDate date, LocalTime time,
+                                          String visitType, String status, Appointment parent) {
         Appointment appt = new Appointment();
         appt.setHospitalId(hospitalId);
         appt.setPatient(patient);
         appt.setAppointmentDate(date);
         appt.setAppointmentTime(time);
-        appt.setVisitType("NEW_VISIT");
-        appt.setStatus("COMPLETED");
+        appt.setVisitType(visitType);
+        appt.setStatus(status);
+        if (parent != null) {
+            appt.setParentAppointment(parent);
+        }
         return appointmentRepository.saveAndFlush(appt);
+    }
+
+    private Appointment createCompletedNewVisit(Patient patient, LocalDate date, LocalTime time) {
+        return createAppointment(patient, date, time, "NEW_VISIT", "COMPLETED", null);
     }
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -158,17 +169,8 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
         void registerFollowUp_FromFollowUp_Returns201() throws Exception {
             Patient patient = createPatient("Chain Patient", "+91-9000000003");
             Appointment originalVisit = createCompletedNewVisit(patient, LocalDate.now().minusDays(14), LocalTime.of(9, 0));
-
-            // First follow-up (completed)
-            Appointment firstFollowUp = new Appointment();
-            firstFollowUp.setHospitalId(hospitalId);
-            firstFollowUp.setPatient(patient);
-            firstFollowUp.setAppointmentDate(LocalDate.now().minusDays(7));
-            firstFollowUp.setAppointmentTime(LocalTime.of(10, 0));
-            firstFollowUp.setVisitType("FOLLOW_UP");
-            firstFollowUp.setStatus("COMPLETED");
-            firstFollowUp.setParentAppointment(originalVisit);
-            firstFollowUp = appointmentRepository.saveAndFlush(firstFollowUp);
+            Appointment firstFollowUp = createAppointment(patient, LocalDate.now().minusDays(7),
+                    LocalTime.of(10, 0), "FOLLOW_UP", "COMPLETED", originalVisit);
 
             // Second follow-up from first follow-up
             mockMvc.perform(post(FOLLOW_UP_URL)
@@ -279,15 +281,8 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
         @DisplayName("returns 409 when parent appointment is not COMPLETED")
         void registerFollowUp_ParentNotCompleted_Returns409() throws Exception {
             Patient patient = createPatient("Not Completed P", "+91-9200000002");
-
-            Appointment registeredAppt = new Appointment();
-            registeredAppt.setHospitalId(hospitalId);
-            registeredAppt.setPatient(patient);
-            registeredAppt.setAppointmentDate(LocalDate.now().minusDays(1));
-            registeredAppt.setAppointmentTime(LocalTime.of(9, 0));
-            registeredAppt.setVisitType("NEW_VISIT");
-            registeredAppt.setStatus("REGISTERED");
-            registeredAppt = appointmentRepository.saveAndFlush(registeredAppt);
+            Appointment registeredAppt = createAppointment(patient, LocalDate.now().minusDays(1),
+                    LocalTime.of(9, 0), "NEW_VISIT", "REGISTERED", null);
 
             mockMvc.perform(post(FOLLOW_UP_URL)
                             .requestAttr("hospitalId", hospitalId.toString())
@@ -304,7 +299,7 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
 
             // Soft-delete the patient
             patient.setDeleted(true);
-            patient.setDeletedAt(java.time.LocalDateTime.now());
+            patient.setDeletedAt(LocalDateTime.now());
             patientRepository.saveAndFlush(patient);
 
             mockMvc.perform(post(FOLLOW_UP_URL)
@@ -321,15 +316,8 @@ import com.eyehospital.pms.module.patient.repository.PatientRepository;
             Appointment parent = createCompletedNewVisit(patient, LocalDate.now().minusDays(7), LocalTime.of(9, 0));
 
             // Create an existing follow-up (REGISTERED) for this parent
-            Appointment existingFollowUp = new Appointment();
-            existingFollowUp.setHospitalId(hospitalId);
-            existingFollowUp.setPatient(patient);
-            existingFollowUp.setAppointmentDate(LocalDate.now().plusDays(1));
-            existingFollowUp.setAppointmentTime(LocalTime.of(10, 0));
-            existingFollowUp.setVisitType("FOLLOW_UP");
-            existingFollowUp.setStatus("REGISTERED");
-            existingFollowUp.setParentAppointment(parent);
-            appointmentRepository.saveAndFlush(existingFollowUp);
+            createAppointment(patient, LocalDate.now().plusDays(1),
+                    LocalTime.of(10, 0), "FOLLOW_UP", "REGISTERED", parent);
 
             // Attempt to create another follow-up for the same parent
             mockMvc.perform(post(FOLLOW_UP_URL)
