@@ -7,12 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.eyehospital.pms.common.exception.BusinessException;
+import com.eyehospital.pms.infrastructure.tenant.repository.HospitalRepository;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
 import com.eyehospital.pms.module.appointment.service.AppointmentService;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 import com.eyehospital.pms.module.patient.entity.Patient;
+import com.eyehospital.pms.module.patient.repository.PatientRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,46 @@ import lombok.extern.slf4j.Slf4j;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final PatientRepository patientRepository;
+    private final HospitalRepository hospitalRepository;
+
+    @Override
+    @Transactional
+    public PatientSearchResponseDto registerAppointment(UUID hospitalId, RegisterAppointmentRequestDto request) {
+        // 0. Check for duplicate mobile number within the hospital
+        if (patientRepository.existsByHospitalIdAndMobileNumberAndDeletedFalse(hospitalId, request.getMobileNumber())) {
+            throw new BusinessException("DUPLICATE_MOBILE_NUMBER",
+                    "A patient with this mobile number already exists in this hospital");
+        }
+
+        // 1. Create the patient
+        Patient patient = new Patient();
+        patient.setHospital(hospitalRepository.getReferenceById(hospitalId));
+        patient.setFullName(request.getFullName());
+        patient.setMobileNumber(request.getMobileNumber());
+        patient.setEmail(request.getEmail());
+        patient.setAge(request.getAge());
+        patient.setGender(request.getGender());
+        patient.setDateOfBirth(request.getDateOfBirth());
+        patient.setAddress(request.getAddress());
+        patient = patientRepository.saveAndFlush(patient);
+
+        // 2. Create the appointment
+        Appointment appointment = new Appointment();
+        appointment.setHospitalId(hospitalId);
+        appointment.setPatient(patient);
+        appointment.setAppointmentDate(request.getAppointmentDate());
+        appointment.setAppointmentTime(request.getAppointmentTime());
+        appointment.setVisitType("NEW_VISIT");
+        appointment.setStatus("REGISTERED");
+        appointment.setNotes(request.getNotes());
+        appointment = appointmentRepository.saveAndFlush(appointment);
+
+        log.info("Registered patient {} with appointment {} for hospital {}",
+                patient.getPatientId(), appointment.getAppointmentId(), hospitalId);
+
+        return toSearchResponseDto(appointment, patient);
+    }
 
     @Override
     @Transactional

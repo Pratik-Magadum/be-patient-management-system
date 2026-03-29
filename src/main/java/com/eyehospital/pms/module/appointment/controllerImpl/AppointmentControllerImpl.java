@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.module.appointment.controller.AppointmentController;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.appointment.service.AppointmentService;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
@@ -20,6 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 public class AppointmentControllerImpl implements AppointmentController {
 
     private final AppointmentService appointmentService;
+
+    @Override
+    public PatientSearchResponseDto registerAppointment(RegisterAppointmentRequestDto request,
+                                                         HttpServletRequest httpRequest) {
+        UUID hospitalId = extractHospitalId(httpRequest);
+        log.info("POST /appointments/register - hospitalId={} patient={}",
+                hospitalId, request.getFullName());
+        return appointmentService.registerAppointment(hospitalId, request);
+    }
 
     @Override
     public PatientSearchResponseDto registerFollowUp(FollowUpRequestDto request,

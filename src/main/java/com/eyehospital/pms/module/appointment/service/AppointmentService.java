@@ -3,12 +3,22 @@ package com.eyehospital.pms.module.appointment.service;
 import java.util.UUID;
 
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 /**
  * Contract for appointment operations.
  */
 public interface AppointmentService {
+
+    /**
+     * Registers a new patient and creates their first appointment.
+     *
+     * @param hospitalId the tenant hospital identifier
+     * @param request    patient and appointment details
+     * @return the newly created patient-appointment details
+     */
+    PatientSearchResponseDto registerAppointment(UUID hospitalId, RegisterAppointmentRequestDto request);
 
     /**
      * Registers a follow-up appointment linked to an existing (completed) parent appointment.

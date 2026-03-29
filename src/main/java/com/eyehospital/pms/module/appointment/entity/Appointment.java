@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import com.eyehospital.pms.infrastructure.security.entity.User;
 import com.eyehospital.pms.module.patient.entity.Patient;
 
 import jakarta.persistence.Column;
@@ -59,6 +60,10 @@ public class Appointment {
 
     @Column(name = "doctor_id", insertable = false, updatable = false)
     private UUID doctorId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", insertable = false, updatable = false)
+    private User createdUser;
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;

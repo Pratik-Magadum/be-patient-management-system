@@ -28,4 +28,9 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
      * Finds a non-deleted patient by ID and hospital.
      */
     Optional<Patient> findByPatientIdAndHospitalIdAndDeletedFalse(UUID patientId, UUID hospitalId);
+
+    /**
+     * Checks if a non-deleted patient with the given mobile number exists in the hospital.
+     */
+    boolean existsByHospitalIdAndMobileNumberAndDeletedFalse(UUID hospitalId, String mobileNumber);
 }

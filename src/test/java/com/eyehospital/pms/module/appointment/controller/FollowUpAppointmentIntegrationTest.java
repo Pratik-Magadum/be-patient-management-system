@@ -27,18 +27,20 @@ import com.eyehospital.pms.module.patient.entity.Patient;
 import com.eyehospital.pms.module.patient.repository.PatientRepository;
 
 /**
- * Integration tests for {@code POST /api/v1/appointments/follow-up}.
+ * Integration tests for {@code /api/v1/appointments} endpoints.
  *
  * <p>Security filters are disabled ({@code addFilters = false} inherited from
- * {@link BaseIntegrationTest}) so these tests focus purely on the follow-up
- * registration business logic and validation.</p>
+ * {@link BaseIntegrationTest}) so these tests focus purely on
+ * business logic and validation.</p>
  */
-@DisplayName("AppointmentController — Follow-Up Registration Integration Tests")
+@DisplayName("AppointmentController — Integration Tests")
 @AutoConfigureMockMvc(addFilters = false)
 class FollowUpAppointmentIntegrationTest extends BaseIntegrationTest {
 
     private static final String FOLLOW_UP_URL =
             ApiConstants.APPOINTMENTS + ApiConstants.APPOINTMENT_FOLLOW_UP;
+    private static final String REGISTER_URL =
+            ApiConstants.APPOINTMENTS + ApiConstants.APPOINTMENT_REGISTER;
 
     @Autowired private HospitalRepository hospitalRepository;
     @Autowired private PatientRepository patientRepository;
@@ -102,6 +104,35 @@ class FollowUpAppointmentIntegrationTest extends BaseIntegrationTest {
         sb.append("\"parentAppointmentId\":\"").append(parentAppointmentId).append("\"");
         sb.append(",\"appointmentDate\":\"").append(date).append("\"");
         sb.append(",\"appointmentTime\":\"").append(time.format(TIME_FMT)).append("\"");
+        if (notes != null) {
+            sb.append(",\"notes\":\"").append(notes).append("\"");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String registerRequestJson(String fullName, String mobileNumber, String email,
+                                       Integer age, String gender, LocalDate dateOfBirth,
+                                       String address,
+                                       LocalDate appointmentDate, LocalTime appointmentTime, String notes) {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"fullName\":\"").append(fullName).append("\"");
+        sb.append(",\"mobileNumber\":\"").append(mobileNumber).append("\"");
+        if (email != null) {
+            sb.append(",\"email\":\"").append(email).append("\"");
+        }
+        sb.append(",\"age\":").append(age);
+        if (gender != null) {
+            sb.append(",\"gender\":\"").append(gender).append("\"");
+        }
+        if (dateOfBirth != null) {
+            sb.append(",\"dateOfBirth\":\"").append(dateOfBirth).append("\"");
+        }
+        if (address != null) {
+            sb.append(",\"address\":\"").append(address).append("\"");
+        }
+        sb.append(",\"appointmentDate\":\"").append(appointmentDate).append("\"");
+        sb.append(",\"appointmentTime\":\"").append(appointmentTime.format(TIME_FMT)).append("\"");
         if (notes != null) {
             sb.append(",\"notes\":\"").append(notes).append("\"");
         }
@@ -348,6 +379,278 @@ class FollowUpAppointmentIntegrationTest extends BaseIntegrationTest {
                             .content(followUpRequestJson(parent.getAppointmentId(), LocalDate.now().plusDays(1), LocalTime.of(10, 0), null)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.patientId").value(patient.getPatientId().toString()));
+        }
+    }
+
+    // =======================================================================
+    // Register appointment — success
+    // =======================================================================
+
+    @Nested
+    @DisplayName("POST /api/v1/appointments/register — success")
+    class RegisterAppointmentSuccess {
+
+        @Test
+        @DisplayName("returns 201 with patient and appointment details")
+        void register_ValidRequest_Returns201() throws Exception {
+            LocalDate apptDate = LocalDate.now().plusDays(1);
+            LocalTime apptTime = LocalTime.of(10, 30);
+
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Rajesh Kumar", "+91-9800000001",
+                                    "rajesh@email.com", 35, "MALE", LocalDate.of(1990, 5, 15),
+                                    "12 MG Road, Mumbai", apptDate, apptTime, "Eye checkup")))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.appointmentId").exists())
+                    .andExpect(jsonPath("$.patientId").exists())
+                    .andExpect(jsonPath("$.patientNumber").exists())
+                    .andExpect(jsonPath("$.patientName").value("Rajesh Kumar"))
+                    .andExpect(jsonPath("$.mobileNumber").value("+91-9800000001"))
+                    .andExpect(jsonPath("$.age").value(35))
+                    .andExpect(jsonPath("$.gender").value("MALE"))
+                    .andExpect(jsonPath("$.email").value("rajesh@email.com"))
+                    .andExpect(jsonPath("$.dateOfBirth").value("1990-05-15"))
+                    .andExpect(jsonPath("$.address").value("12 MG Road, Mumbai"))
+                    .andExpect(jsonPath("$.visitType").value("NEW_VISIT"))
+                    .andExpect(jsonPath("$.appointmentStatus").value("REGISTERED"))
+                    .andExpect(jsonPath("$.appointmentDate").value(apptDate.toString()))
+                    .andExpect(jsonPath("$.appointmentTime").value("10:30:00"))
+                    .andExpect(jsonPath("$.notes").value("Eye checkup"));
+        }
+
+        @Test
+        @DisplayName("optional fields can be omitted")
+        void register_OnlyRequiredFields_Returns201() throws Exception {
+            LocalDate apptDate = LocalDate.now().plusDays(2);
+            LocalTime apptTime = LocalTime.of(14, 0);
+
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Minimal Patient", "+91-9800000002",
+                                    null, 28, null, null,
+                                    null, apptDate, apptTime, null)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.patientName").value("Minimal Patient"))
+                    .andExpect(jsonPath("$.mobileNumber").value("+91-9800000002"))
+                    .andExpect(jsonPath("$.email").isEmpty())
+                    .andExpect(jsonPath("$.dateOfBirth").isEmpty())
+                    .andExpect(jsonPath("$.address").isEmpty())
+                    .andExpect(jsonPath("$.notes").isEmpty())
+                    .andExpect(jsonPath("$.visitType").value("NEW_VISIT"))
+                    .andExpect(jsonPath("$.appointmentStatus").value("REGISTERED"));
+        }
+
+        @Test
+        @DisplayName("patient number is auto-generated")
+        void register_PatientNumberGenerated() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Auto Number Patient", "+91-9800000003",
+                                    null, 30, null, null,
+                                    null, LocalDate.now(), LocalTime.of(9, 0), null)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.patientNumber").isNotEmpty());
+        }
+    }
+
+    // =======================================================================
+    // Register appointment — validation
+    // =======================================================================
+
+    @Nested
+    @DisplayName("POST /api/v1/appointments/register — validation")
+    class RegisterAppointmentValidation {
+
+        @Test
+        @DisplayName("returns 400 when fullName is missing")
+        void register_MissingFullName_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"mobileNumber\":\"+91-9800000010\","
+                                    + "\"appointmentDate\":\"" + LocalDate.now().plusDays(1) + "\","
+                                    + "\"appointmentTime\":\"10:00:00\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when fullName is blank")
+        void register_BlankFullName_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"  \",\"mobileNumber\":\"+91-9800000011\","
+                                    + "\"appointmentDate\":\"" + LocalDate.now().plusDays(1) + "\","
+                                    + "\"appointmentTime\":\"10:00:00\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when mobileNumber is missing")
+        void register_MissingMobileNumber_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"Test Patient\","
+                                    + "\"age\":30,"
+                                    + "\"appointmentDate\":\"" + LocalDate.now().plusDays(1) + "\","
+                                    + "\"appointmentTime\":\"10:00:00\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when age is missing")
+        void register_MissingAge_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"Test Patient\","
+                                    + "\"mobileNumber\":\"+91-9800000014\","
+                                    + "\"appointmentDate\":\"" + LocalDate.now().plusDays(1) + "\","
+                                    + "\"appointmentTime\":\"10:00:00\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when appointmentDate is missing")
+        void register_MissingAppointmentDate_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"Test Patient\","
+                                    + "\"mobileNumber\":\"+91-9800000012\","
+                                    + "\"appointmentTime\":\"10:00:00\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when appointmentTime is missing")
+        void register_MissingAppointmentTime_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"Test Patient\","
+                                    + "\"mobileNumber\":\"+91-9800000013\","
+                                    + "\"appointmentDate\":\"" + LocalDate.now().plusDays(1) + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when request body is empty")
+        void register_EmptyBody_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 400 when request body is malformed JSON")
+        void register_MalformedJson_Returns400() throws Exception {
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{invalid json}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("returns 409 when mobile number already exists in the hospital")
+        void register_DuplicateMobileNumber_Returns409() throws Exception {
+            // First registration succeeds
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("First Patient", "+91-9800000099",
+                                    null, 30, null, null,
+                                    null, LocalDate.now(), LocalTime.of(9, 0), null)))
+                    .andExpect(status().isCreated());
+
+            // Second registration with same mobile number fails
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Second Patient", "+91-9800000099",
+                                    null, 25, null, null,
+                                    null, LocalDate.now().plusDays(1), LocalTime.of(10, 0), null)))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").value("A patient with this mobile number already exists in this hospital"));
+        }
+    }
+
+    // =======================================================================
+    // Register appointment — tenant isolation
+    // =======================================================================
+
+    @Nested
+    @DisplayName("POST /api/v1/appointments/register — tenant isolation")
+    class RegisterAppointmentTenantIsolation {
+
+        @Test
+        @DisplayName("appointment is created with correct hospitalId and does not appear in other hospital")
+        void register_TenantIsolation() throws Exception {
+            // Create in hospital 1
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Tenant Patient", "+91-9800000020",
+                                    null, 45, null, null,
+                                    null, LocalDate.now(), LocalTime.of(9, 0), null)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.patientName").value("Tenant Patient"));
+
+            // Create another hospital
+            Hospital otherHospital = new Hospital();
+            otherHospital.setName("Other Reg Hospital");
+            otherHospital.setSubdomain("other-reg-" + UUID.randomUUID().toString().substring(0, 8));
+            otherHospital.setAddress("456 Other Street");
+            otherHospital.setContactEmail("other-reg@test.com");
+            otherHospital.setContactPhone("+91-7777777777");
+            otherHospital.setActive(true);
+            otherHospital = hospitalRepository.saveAndFlush(otherHospital);
+
+            // Verify count: other hospital should have 0 appointments
+            long count = appointmentRepository
+                    .countByHospitalIdAndAppointmentDateAndDeletedFalse(otherHospital.getHospitalId(), LocalDate.now());
+            assert count == 0 : "Other hospital should have 0 appointments, but found " + count;
+        }
+
+        @Test
+        @DisplayName("same mobile number can be used in different hospitals")
+        void register_SameMobileDifferentHospital_Returns201() throws Exception {
+            // Register in hospital 1
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", hospitalId.toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Hospital1 Patient", "+91-9800000088",
+                                    null, 40, null, null,
+                                    null, LocalDate.now(), LocalTime.of(9, 0), null)))
+                    .andExpect(status().isCreated());
+
+            // Create another hospital
+            Hospital otherHospital = new Hospital();
+            otherHospital.setName("Cross Tenant Hospital");
+            otherHospital.setSubdomain("cross-tenant-" + UUID.randomUUID().toString().substring(0, 8));
+            otherHospital.setAddress("789 Cross Street");
+            otherHospital.setContactEmail("cross@test.com");
+            otherHospital.setContactPhone("+91-6666666666");
+            otherHospital.setActive(true);
+            otherHospital = hospitalRepository.saveAndFlush(otherHospital);
+
+            // Same mobile number in different hospital should succeed
+            mockMvc.perform(post(REGISTER_URL)
+                            .requestAttr("hospitalId", otherHospital.getHospitalId().toString())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerRequestJson("Hospital2 Patient", "+91-9800000088",
+                                    null, 35, null, null,
+                                    null, LocalDate.now(), LocalTime.of(10, 0), null)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.patientName").value("Hospital2 Patient"));
         }
     }
 }

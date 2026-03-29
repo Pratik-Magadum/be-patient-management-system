@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,34 @@ import jakarta.validation.Valid;
 @Tag(name = "Appointment", description = "Appointment management operations")
 @RequestMapping(ApiConstants.APPOINTMENTS)
 public interface AppointmentController {
+
+    @PostMapping(ApiConstants.APPOINTMENT_REGISTER)
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary     = "Register a new patient appointment",
+            description = "Creates a new patient record and their first appointment (NEW_VISIT). "
+                        + "Required fields: fullName, mobileNumber, appointmentDate, appointmentTime."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description  = "Patient and appointment registered successfully",
+                    content      = @Content(schema = @Schema(implementation = PatientSearchResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description  = "Missing or invalid required fields",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized \u2014 missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    PatientSearchResponseDto registerAppointment(
+            @Valid @RequestBody RegisterAppointmentRequestDto request,
+            HttpServletRequest httpRequest);
 
     @PostMapping(ApiConstants.APPOINTMENT_FOLLOW_UP)
     @ResponseStatus(HttpStatus.CREATED)
