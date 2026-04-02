@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.eyehospital.pms.common.exception.BusinessException;
+import com.eyehospital.pms.common.mapper.PatientMapper;
 import com.eyehospital.pms.infrastructure.tenant.repository.HospitalRepository;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
@@ -41,13 +42,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         // 1. Create the patient
         Patient patient = new Patient();
         patient.setHospital(hospitalRepository.getReferenceById(hospitalId));
-        patient.setFullName(request.getFullName());
-        patient.setMobileNumber(request.getMobileNumber());
-        patient.setEmail(request.getEmail());
-        patient.setAge(request.getAge());
-        patient.setGender(request.getGender());
-        patient.setDateOfBirth(request.getDateOfBirth());
-        patient.setAddress(request.getAddress());
+        PatientMapper.applyDtoToPatient(request, patient);
         patient = patientRepository.saveAndFlush(patient);
 
         // 2. Create the appointment
@@ -64,7 +59,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         log.info("Registered patient {} with appointment {} for hospital {}",
                 patient.getPatientId(), appointment.getAppointmentId(), hospitalId);
 
-        return toSearchResponseDto(appointment, patient);
+        return PatientMapper.toResponseDto(appointment);
     }
 
     @Override
@@ -111,7 +106,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         log.info("Created follow-up appointment {} for parent {} in hospital {}",
                 followUp.getAppointmentId(), parent.getAppointmentId(), hospitalId);
 
-        return toSearchResponseDto(followUp, patient);
+        return PatientMapper.toResponseDto(followUp);
     }
 
     @Override
@@ -129,23 +124,4 @@ public class AppointmentServiceImpl implements AppointmentService {
         log.info("Soft-deleted appointment {} for hospital {}", appointmentId, hospitalId);
     }
 
-    private PatientSearchResponseDto toSearchResponseDto(Appointment appointment, Patient patient) {
-        return PatientSearchResponseDto.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .patientId(patient.getPatientId())
-                .patientNumber(patient.getPatientNumber())
-                .patientName(patient.getFullName())
-                .mobileNumber(patient.getMobileNumber())
-                .age(patient.getAge())
-                .gender(patient.getGender())
-                .email(patient.getEmail())
-                .dateOfBirth(patient.getDateOfBirth())
-                .address(patient.getAddress())
-                .visitType(appointment.getVisitType())
-                .appointmentDate(appointment.getAppointmentDate())
-                .appointmentTime(appointment.getAppointmentTime())
-                .appointmentStatus(appointment.getStatus())
-                .notes(appointment.getNotes())
-                .build();
-    }
 }

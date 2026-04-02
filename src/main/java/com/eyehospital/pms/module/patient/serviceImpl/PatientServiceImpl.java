@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.eyehospital.pms.common.exception.BusinessException;
+import com.eyehospital.pms.common.mapper.PatientMapper;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
@@ -147,7 +148,7 @@ public class PatientServiceImpl implements PatientService {
         Page<Appointment> appointmentPage = appointmentRepository.findAll(spec, pageable);
 
         List<PatientSearchResponseDto> patients = appointmentPage.getContent().stream()
-                .map(this::toSearchResponseDto)
+                .map(PatientMapper::toResponseDto)
                 .toList();
 
         // Use repository counts for accurate totals across all pages
@@ -188,7 +189,7 @@ public class PatientServiceImpl implements PatientService {
         spec = spec.and(AppointmentSpecification.orderByStatusThenDateTimeAsc());
 
         return appointmentRepository.findAll(spec).stream()
-                .map(this::toSearchResponseDto)
+                .map(PatientMapper::toResponseDto)
                 .toList();
     }
 
@@ -212,20 +213,14 @@ public class PatientServiceImpl implements PatientService {
         }
 
         // 3. Update the patient fields
-        patient.setFullName(request.getFullName());
-        patient.setMobileNumber(request.getMobileNumber());
-        patient.setEmail(request.getEmail());
-        patient.setAge(request.getAge());
-        patient.setGender(request.getGender());
-        patient.setDateOfBirth(request.getDateOfBirth());
-        patient.setAddress(request.getAddress());
+        PatientMapper.applyDtoToPatient(request, patient);
 
         patient = patientRepository.saveAndFlush(patient);
 
         log.info("Updated patient {} for hospital {}", patientId, hospitalId);
 
         // 4. Return the updated patient details with the latest appointment (if any)
-        return toPatientResponseDto(patient);
+        return PatientMapper.toResponseDto(patient);
     }
 
     // -----------------------------------------------------------------------
@@ -250,61 +245,5 @@ public class PatientServiceImpl implements PatientService {
         log.info("Soft-deleted patient {} and appointments for hospitalId={}", patientId, hospitalId);
     }
 
-    // -----------------------------------------------------------------------
-    // Private mapping helpers
-    // -----------------------------------------------------------------------
 
-    private PatientSearchResponseDto toSearchResponseDto(Appointment appointment) {
-        Patient patient = appointment.getPatient();
-        return PatientSearchResponseDto.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .patientId(patient.getPatientId())
-                .patientNumber(patient.getPatientNumber())
-                .patientName(patient.getFullName())
-                .mobileNumber(patient.getMobileNumber())
-                .age(patient.getAge())
-                .gender(patient.getGender())
-                .email(patient.getEmail())
-                .dateOfBirth(patient.getDateOfBirth())
-                .address(patient.getAddress())
-                .visitType(appointment.getVisitType())
-                .appointmentDate(appointment.getAppointmentDate())
-                .appointmentTime(appointment.getAppointmentTime())
-                .appointmentStatus(appointment.getStatus())
-                .notes(appointment.getNotes())
-                .build();
-    }
-
-    /**
-     * Maps a Patient entity to a response DTO using the latest non-deleted appointment (if any).
-     */
-    private PatientSearchResponseDto toPatientResponseDto(Patient patient) {
-        // Find the most recent non-deleted appointment for context
-        Appointment latestAppointment = patient.getAppointments().stream()
-                .filter(a -> !a.isDeleted())
-                .max((a1, a2) -> {
-                    int dateCompare = a1.getAppointmentDate().compareTo(a2.getAppointmentDate());
-                    return dateCompare != 0 ? dateCompare
-                            : a1.getAppointmentTime().compareTo(a2.getAppointmentTime());
-                })
-                .orElse(null);
-
-        return PatientSearchResponseDto.builder()
-                .patientId(patient.getPatientId())
-                .patientNumber(patient.getPatientNumber())
-                .patientName(patient.getFullName())
-                .mobileNumber(patient.getMobileNumber())
-                .age(patient.getAge())
-                .gender(patient.getGender())
-                .email(patient.getEmail())
-                .dateOfBirth(patient.getDateOfBirth())
-                .address(patient.getAddress())
-                .appointmentId(latestAppointment != null ? latestAppointment.getAppointmentId() : null)
-                .visitType(latestAppointment != null ? latestAppointment.getVisitType() : null)
-                .appointmentDate(latestAppointment != null ? latestAppointment.getAppointmentDate() : null)
-                .appointmentTime(latestAppointment != null ? latestAppointment.getAppointmentTime() : null)
-                .appointmentStatus(latestAppointment != null ? latestAppointment.getStatus() : null)
-                .notes(latestAppointment != null ? latestAppointment.getNotes() : null)
-                .build();
-    }
 }
