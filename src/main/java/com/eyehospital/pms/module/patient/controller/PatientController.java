@@ -8,10 +8,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
@@ -24,7 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-
+import jakarta.validation.Valid;
 /**
  * REST API contract for patient operations.
  *
@@ -163,6 +166,54 @@ public interface PatientController {
             @Parameter(description = "Partial phone number", example = "+91-9800")
             @RequestParam(required = false) String phoneNumber,
             HttpServletRequest request);
+
+    /**
+     * Updates an existing patient's details.
+     *
+     * <p>The patient is identified by the {@code patientId} path variable.
+     * The patient must belong to the authenticated user's hospital and must not be
+     * soft-deleted. If the mobile number is changed, it is validated for uniqueness
+     * within the hospital (excluding the current patient).</p>
+     *
+     * @param patientId   the UUID of the patient to update (path variable)
+     * @param request     the update request body (same fields as registration; appointment fields ignored)
+     * @param httpRequest the HTTP request (used to extract hospitalId from JWT)
+     * @return the updated patient details
+     */
+    @PutMapping(ApiConstants.PATIENT_UPDATE)
+    @Operation(
+            summary     = "Update patient details",
+            description = "Updates an existing patient's details using the patientId from the path. "
+                        + "Uses the same request fields as patient registration (appointment fields are ignored). "
+                        + "The patient must belong to the authenticated user's hospital and must not be soft-deleted. "
+                        + "If the mobile number is changed, it is validated for uniqueness within the hospital."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Patient details updated successfully",
+                    content      = @Content(schema = @Schema(implementation = PatientSearchResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description  = "Missing or invalid required fields",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized \u2014 missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description  = "Patient not found, already deleted, or duplicate mobile number",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    PatientSearchResponseDto updatePatient(
+            @Parameter(description = "Patient UUID") @PathVariable UUID patientId,
+            @Valid @RequestBody RegisterAppointmentRequestDto request,
+            HttpServletRequest httpRequest);
 
     /**
      * Soft-deletes a patient and all associated appointments.

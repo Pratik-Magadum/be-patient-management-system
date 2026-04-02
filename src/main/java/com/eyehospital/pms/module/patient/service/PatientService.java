@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
@@ -52,6 +53,16 @@ public interface PatientService {
      * @return list of matching patient–appointment records
      */
     List<PatientSearchResponseDto> searchByNamePhone(UUID hospitalId, String name, String phoneNumber);
+
+    /**
+     * Updates an existing patient's details.
+     *
+     * @param hospitalId the tenant hospital identifier
+     * @param patientId  the patient to update
+     * @param request    the update request containing new patient details
+     * @return the updated patient details
+     */
+    PatientSearchResponseDto updatePatient(UUID hospitalId, UUID patientId, RegisterAppointmentRequestDto request);
 
     /**
      * Soft-deletes a patient and all associated appointments.

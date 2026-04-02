@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.eyehospital.pms.common.exception.BusinessException;
+import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.controller.PatientController;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
@@ -119,6 +120,14 @@ public class PatientControllerImpl implements PatientController {
                 hospitalId, name, phoneNumber);
 
         return patientService.searchByNamePhone(hospitalId, name, phoneNumber);
+    }
+
+    @Override
+    public PatientSearchResponseDto updatePatient(UUID patientId, RegisterAppointmentRequestDto request,
+                                                   HttpServletRequest httpRequest) {
+        UUID hospitalId = extractHospitalId(httpRequest);
+        log.info("PUT /patients/{} - hospitalId={}", patientId, hospitalId);
+        return patientService.updatePatient(hospitalId, patientId, request);
     }
 
     @Override
