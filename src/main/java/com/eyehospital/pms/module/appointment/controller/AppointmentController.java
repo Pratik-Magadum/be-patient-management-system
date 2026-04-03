@@ -4,13 +4,16 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.eyehospital.pms.common.constants.ApiConstants;
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -120,5 +123,41 @@ public interface AppointmentController {
     void deleteAppointment(
             @Parameter(description = "Appointment UUID", required = true)
             @PathVariable UUID appointmentId,
+            HttpServletRequest httpRequest);
+
+    @PatchMapping(ApiConstants.APPOINTMENT_UPDATE_STATUS)
+    @Operation(
+            summary     = "Update appointment status",
+            description = "Updates the status of an existing appointment. "
+                        + "Valid transitions: REGISTERED → IN_PROGRESS → COMPLETED. "
+                        + "Accessible by RECEPTIONIST, DOCTOR, and ADMIN roles."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description  = "Appointment status updated successfully",
+                    content      = @Content(schema = @Schema(implementation = PatientSearchResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description  = "Invalid or missing status value",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description  = "Appointment not found, already deleted, invalid status, or invalid transition",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized — missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    PatientSearchResponseDto updateStatus(
+            @Parameter(description = "Appointment UUID", required = true)
+            @PathVariable UUID appointmentId,
+            @Parameter(description = "New status: REGISTERED, IN_PROGRESS, or COMPLETED", required = true)
+            @RequestParam AppointmentStatus status,
             HttpServletRequest httpRequest);
 }

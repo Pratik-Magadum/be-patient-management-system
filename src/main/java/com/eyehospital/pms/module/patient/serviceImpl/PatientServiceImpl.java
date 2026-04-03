@@ -12,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.common.mapper.PatientMapper;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
@@ -68,7 +69,7 @@ public class PatientServiceImpl implements PatientService {
             followUpPatients = appointmentRepository
                     .countByHospitalIdAndAppointmentDateAndVisitTypeAndDeletedFalse(hospitalId, fromDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateAndStatusAndDeletedFalse(hospitalId, fromDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateAndStatusAndDeletedFalse(hospitalId, fromDate, AppointmentStatus.COMPLETED.name());
         } else {
             // Date-range queries
             totalPatients = appointmentRepository
@@ -78,7 +79,7 @@ public class PatientServiceImpl implements PatientService {
             followUpPatients = appointmentRepository
                     .countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndDeletedFalse(hospitalId, fromDate, toDate, "FOLLOW_UP");
             completedPatients = appointmentRepository
-                    .countByHospitalIdAndAppointmentDateBetweenAndStatusAndDeletedFalse(hospitalId, fromDate, toDate, "COMPLETED");
+                    .countByHospitalIdAndAppointmentDateBetweenAndStatusAndDeletedFalse(hospitalId, fromDate, toDate, AppointmentStatus.COMPLETED.name());
         }
 
         long totalRegisteredPatients = patientRepository.countByHospitalIdAndDeletedFalse(hospitalId);

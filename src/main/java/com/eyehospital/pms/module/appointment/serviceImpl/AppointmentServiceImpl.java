@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.common.mapper.PatientMapper;
 import com.eyehospital.pms.infrastructure.tenant.repository.HospitalRepository;
@@ -52,7 +53,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
         appointment.setVisitType("NEW_VISIT");
-        appointment.setStatus("REGISTERED");
+        appointment.setStatus(AppointmentStatus.REGISTERED.name());
         appointment.setNotes(request.getNotes());
         appointment = appointmentRepository.saveAndFlush(appointment);
 
@@ -72,7 +73,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         "Parent appointment not found or belongs to another hospital"));
 
         // 2. Parent must be COMPLETED
-        if (!"COMPLETED".equals(parent.getStatus())) {
+        if (!AppointmentStatus.COMPLETED.name().equals(parent.getStatus())) {
             throw new BusinessException("PARENT_NOT_COMPLETED",
                     "Follow-up can only be created for a completed appointment");
         }
@@ -85,7 +86,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         // 4. Check if a follow-up already exists for this parent (not completed)
-        if (appointmentRepository.existsByParentAppointmentAndStatusNotAndDeletedFalse(parent, "COMPLETED")) {
+        if (appointmentRepository.existsByParentAppointmentAndStatusNotAndDeletedFalse(parent, AppointmentStatus.COMPLETED.name())) {
             throw new BusinessException("FOLLOW_UP_ALREADY_EXISTS",
                     "A follow-up appointment already exists for this parent appointment");
         }
@@ -97,7 +98,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         followUp.setAppointmentDate(request.getAppointmentDate());
         followUp.setAppointmentTime(request.getAppointmentTime());
         followUp.setVisitType("FOLLOW_UP");
-        followUp.setStatus("REGISTERED");
+        followUp.setStatus(AppointmentStatus.REGISTERED.name());
         followUp.setParentAppointment(parent);
         followUp.setNotes(request.getNotes());
 
@@ -122,6 +123,33 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentRepository.save(appointment);
 
         log.info("Soft-deleted appointment {} for hospital {}", appointmentId, hospitalId);
+    }
+
+    @Override
+    @Transactional
+    public PatientSearchResponseDto updateStatus(UUID hospitalId, UUID appointmentId, AppointmentStatus newStatus) {
+        // 1. Lookup the appointment — must exist, belong to this hospital, and not be deleted
+        Appointment appointment = appointmentRepository
+                .findByAppointmentIdAndHospitalIdAndDeletedFalse(appointmentId, hospitalId)
+                .orElseThrow(() -> new BusinessException("APPOINTMENT_NOT_FOUND",
+                        "Appointment not found, already deleted, or belongs to another hospital"));
+
+        // 2. Validate the status transition
+        AppointmentStatus currentStatus = AppointmentStatus.valueOf(appointment.getStatus());
+        if (!currentStatus.canTransitionTo(newStatus)) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                    "Cannot transition from " + currentStatus + " to " + newStatus
+                            + ". Valid flow: REGISTERED → IN_PROGRESS → COMPLETED");
+        }
+
+        // 3. Update the status
+        appointment.setStatus(newStatus.name());
+        appointmentRepository.save(appointment);
+
+        log.info("Updated appointment {} status from {} to {} for hospital {}",
+                appointmentId, currentStatus, newStatus, hospitalId);
+
+        return PatientMapper.toResponseDto(appointment);
     }
 
 }

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.module.appointment.controller.AppointmentController;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
@@ -45,6 +46,15 @@ public class AppointmentControllerImpl implements AppointmentController {
         UUID hospitalId = extractHospitalId(httpRequest);
         log.info("DELETE /appointments/{} - hospitalId={}", appointmentId, hospitalId);
         appointmentService.deleteAppointment(hospitalId, appointmentId);
+    }
+
+    @Override
+    public PatientSearchResponseDto updateStatus(UUID appointmentId, AppointmentStatus status,
+                                                  HttpServletRequest httpRequest) {
+        UUID hospitalId = extractHospitalId(httpRequest);
+        log.info("PATCH /appointments/{}/status - hospitalId={} newStatus={}",
+                appointmentId, hospitalId, status);
+        return appointmentService.updateStatus(hospitalId, appointmentId, status);
     }
 
     private UUID extractHospitalId(HttpServletRequest request) {

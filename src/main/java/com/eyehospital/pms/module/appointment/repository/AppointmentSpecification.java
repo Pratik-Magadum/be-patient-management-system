@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.patient.entity.Patient;
 
@@ -76,9 +77,9 @@ public final class AppointmentSpecification {
         return (root, query, cb) -> {
             // REGISTERED=0, IN_PROGRESS=1, COMPLETED=2
             Expression<Integer> statusOrder = cb.<Integer>selectCase()
-                    .when(cb.equal(root.get("status"), "REGISTERED"), 0)
-                    .when(cb.equal(root.get("status"), "IN_PROGRESS"), 1)
-                    .when(cb.equal(root.get("status"), "COMPLETED"), 2)
+                    .when(cb.equal(root.get("status"), AppointmentStatus.REGISTERED.name()), 0)
+                    .when(cb.equal(root.get("status"), AppointmentStatus.IN_PROGRESS.name()), 1)
+                    .when(cb.equal(root.get("status"), AppointmentStatus.COMPLETED.name()), 2)
                     .otherwise(3);
 
             query.orderBy(List.of(

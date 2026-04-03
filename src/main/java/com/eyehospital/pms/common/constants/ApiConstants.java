@@ -43,9 +43,10 @@ public final class ApiConstants {
     // Appointment module
     // -----------------------------------------------------------------------
     public static final String APPOINTMENTS          = API_BASE + V1 + "/appointments";
-    public static final String APPOINTMENT_REGISTER   = "/register";
-    public static final String APPOINTMENT_FOLLOW_UP  = "/follow-up";
-    public static final String APPOINTMENT_DELETE     = "/{appointmentId}";
+    public static final String APPOINTMENT_REGISTER       = "/register";
+    public static final String APPOINTMENT_FOLLOW_UP      = "/follow-up";
+    public static final String APPOINTMENT_DELETE         = "/{appointmentId}";
+    public static final String APPOINTMENT_UPDATE_STATUS  = "/{appointmentId}/status";
 
     // -----------------------------------------------------------------------
     // Consultation module

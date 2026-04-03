@@ -2,6 +2,7 @@ package com.eyehospital.pms.module.appointment.service;
 
 import java.util.UUID;
 
+import com.eyehospital.pms.common.enums.AppointmentStatus;
 import com.eyehospital.pms.module.appointment.dto.FollowUpRequestDto;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -36,4 +37,16 @@ public interface AppointmentService {
      * @param appointmentId the appointment to delete
      */
     void deleteAppointment(UUID hospitalId, UUID appointmentId);
+
+    /**
+     * Updates the status of an appointment.
+     *
+     * <p>Valid transitions: REGISTERED → IN_PROGRESS → COMPLETED.</p>
+     *
+     * @param hospitalId    the tenant hospital identifier
+     * @param appointmentId the appointment to update
+     * @param request       the request containing the new status
+     * @return the updated appointment details
+     */
+    PatientSearchResponseDto updateStatus(UUID hospitalId, UUID appointmentId, AppointmentStatus status);
 }
