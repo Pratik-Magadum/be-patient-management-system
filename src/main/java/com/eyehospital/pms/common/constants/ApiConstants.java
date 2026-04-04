@@ -59,6 +59,11 @@ public final class ApiConstants {
     public static final String DIAGNOSTICS           = API_BASE + V1 + "/diagnostics";
 
     // -----------------------------------------------------------------------
+    // Feature flags module
+    // -----------------------------------------------------------------------
+    public static final String FEATURES              = API_BASE + V1 + "/features";
+
+    // -----------------------------------------------------------------------
     // Utility
     // -----------------------------------------------------------------------
     private ApiConstants() {

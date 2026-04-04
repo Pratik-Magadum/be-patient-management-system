@@ -1,7 +1,5 @@
 package com.eyehospital.pms.infrastructure.security.config;
 
-import static com.eyehospital.pms.common.constants.ApiConstants.*;
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +22,15 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static com.eyehospital.pms.common.constants.ApiConstants.APPOINTMENTS;
+import static com.eyehospital.pms.common.constants.ApiConstants.AUTH_LOGIN;
+import static com.eyehospital.pms.common.constants.ApiConstants.AUTH_LOGOUT;
+import static com.eyehospital.pms.common.constants.ApiConstants.AUTH_REFRESH;
+import static com.eyehospital.pms.common.constants.ApiConstants.CONSULTATIONS;
+import static com.eyehospital.pms.common.constants.ApiConstants.DIAGNOSTICS;
+import static com.eyehospital.pms.common.constants.ApiConstants.FEATURES;
+import static com.eyehospital.pms.common.constants.ApiConstants.HOSPITALS;
+import static com.eyehospital.pms.common.constants.ApiConstants.PATIENTS;
 import com.eyehospital.pms.infrastructure.security.filter.TenantContextFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -73,6 +80,8 @@ public class SecurityConfig {
                         .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
 
                         // Role-based access aligned with project's roles (README §10)
+                        .requestMatchers(FEATURES)
+                            .hasAnyRole(ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_ASSISTANT)
                         .requestMatchers(PATIENTS + WILDCARD)
                             .hasAnyRole(ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_ASSISTANT)
                         .requestMatchers(APPOINTMENTS + WILDCARD)
