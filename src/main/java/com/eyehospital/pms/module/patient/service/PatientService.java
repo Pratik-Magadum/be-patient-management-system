@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientHistoryResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -71,4 +72,16 @@ public interface PatientService {
      * @param patientId  the patient to soft-delete
      */
     void deletePatient(UUID hospitalId, UUID patientId);
+
+    /**
+     * Retrieves the visit history for a specific patient.
+     *
+     * <p>Returns all appointments with their consultation diagnoses and
+     * prescribed medicines, ordered by most recent first.</p>
+     *
+     * @param hospitalId the tenant hospital identifier
+     * @param patientId  the patient whose history to retrieve
+     * @return list of history entries ordered by date descending
+     */
+    List<PatientHistoryResponseDto> getPatientHistory(UUID hospitalId, UUID patientId);
 }

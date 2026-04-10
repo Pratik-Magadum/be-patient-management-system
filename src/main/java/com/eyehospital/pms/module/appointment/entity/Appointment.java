@@ -11,6 +11,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import com.eyehospital.pms.infrastructure.security.entity.User;
+import com.eyehospital.pms.module.consultation.entity.Consultation;
 import com.eyehospital.pms.module.patient.entity.Patient;
 
 import jakarta.persistence.Column;
@@ -22,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -62,8 +64,15 @@ public class Appointment {
     private UUID doctorId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", insertable = false, updatable = false)
+    private User doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", insertable = false, updatable = false)
     private User createdUser;
+
+    @OneToOne(mappedBy = "appointment", fetch = FetchType.LAZY)
+    private Consultation consultation;
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;

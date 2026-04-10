@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +20,9 @@ import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.appointment.entity.Appointment;
 import com.eyehospital.pms.module.appointment.repository.AppointmentRepository;
 import com.eyehospital.pms.module.appointment.repository.AppointmentSpecification;
+import com.eyehospital.pms.module.consultation.entity.Consultation;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientHistoryResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -244,6 +247,67 @@ public class PatientServiceImpl implements PatientService {
         patientRepository.save(patient);
 
         log.info("Soft-deleted patient {} and appointments for hospitalId={}", patientId, hospitalId);
+    }
+
+    // -----------------------------------------------------------------------
+    // Patient visit history
+    // -----------------------------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientHistoryResponseDto> getPatientHistory(UUID hospitalId, UUID patientId) {
+        log.debug("Fetching visit history for patientId={} hospitalId={}", patientId, hospitalId);
+
+        // Verify patient exists and belongs to this hospital
+        patientRepository.findByPatientIdAndHospitalIdAndDeletedFalse(patientId, hospitalId)
+                .orElseThrow(() -> new BusinessException("PATIENT_NOT_FOUND",
+                        "Patient not found or already deleted"));
+
+        return appointmentRepository
+                .findByPatientIdAndHospitalIdAndDeletedFalseOrderByAppointmentDateDescAppointmentTimeDesc(
+                        patientId, hospitalId)
+                .stream()
+                .map(this::toHistoryDto)
+                .toList();
+    }
+
+    private PatientHistoryResponseDto toHistoryDto(Appointment appointment) {
+        Consultation consultation = appointment.getConsultation();
+
+        String doctorName = appointment.getDoctor() != null
+                ? appointment.getDoctor().getFullName()
+                : null;
+
+        String diagnosis = null;
+        String medicines = null;
+        LocalDate followUpDate = null;
+
+        if (consultation != null) {
+            diagnosis = consultation.getDiagnosisNotes();
+            followUpDate = consultation.getFollowUpDate();
+
+            if (consultation.getPrescriptions() != null
+                    && !consultation.getPrescriptions().isEmpty()) {
+                medicines = consultation.getPrescriptions().stream()
+                        .map(p -> p.getMedicine().getName())
+                        .sorted()
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+            }
+        }
+
+        return PatientHistoryResponseDto.builder()
+                .appointmentId(appointment.getAppointmentId())
+                .date(appointment.getAppointmentDate())
+                .time(appointment.getAppointmentTime())
+                .visitType(appointment.getVisitType())
+                .status(appointment.getStatus())
+                .doctorName(doctorName)
+                .diagnosis(diagnosis)
+                .medicines(medicines)
+                .followUpDate(followUpDate)
+                .notes(appointment.getNotes())
+                .build();
     }
 
 

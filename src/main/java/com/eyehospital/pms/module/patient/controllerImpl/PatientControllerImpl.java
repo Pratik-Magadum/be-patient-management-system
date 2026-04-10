@@ -10,6 +10,7 @@ import com.eyehospital.pms.common.exception.BusinessException;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.controller.PatientController;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientHistoryResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -135,6 +136,13 @@ public class PatientControllerImpl implements PatientController {
         UUID hospitalId = extractHospitalId(request);
         log.info("DELETE /patients/{} - hospitalId={}", patientId, hospitalId);
         patientService.deletePatient(hospitalId, patientId);
+    }
+
+    @Override
+    public List<PatientHistoryResponseDto> getPatientHistory(UUID patientId, HttpServletRequest request) {
+        UUID hospitalId = extractHospitalId(request);
+        log.info("GET /patients/{}/history - hospitalId={}", patientId, hospitalId);
+        return patientService.getPatientHistory(hospitalId, patientId);
     }
 
     // -----------------------------------------------------------------------

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.eyehospital.pms.common.constants.ApiConstants;
 import com.eyehospital.pms.module.appointment.dto.RegisterAppointmentRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientDashboardResponseDto;
+import com.eyehospital.pms.module.patient.dto.PatientHistoryResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchListResponseDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchRequestDto;
 import com.eyehospital.pms.module.patient.dto.PatientSearchResponseDto;
@@ -244,6 +245,45 @@ public interface PatientController {
             )
     })
     void deletePatient(
+            @Parameter(description = "Patient UUID") @PathVariable UUID patientId,
+            HttpServletRequest request);
+
+    /**
+     * Retrieves the visit history for a specific patient.
+     *
+     * <p>Returns all appointments with consultation diagnoses and prescribed
+     * medicines, ordered by most recent first. The patient must belong to
+     * the authenticated user's hospital.</p>
+     *
+     * @param patientId the UUID of the patient
+     * @param request   the HTTP request (used to extract hospitalId from JWT)
+     * @return list of patient history entries
+     */
+    @GetMapping(ApiConstants.PATIENT_HISTORY)
+    @Operation(
+            summary     = "Get patient visit history",
+            description = "Returns the visit history for a patient including appointment details, "
+                        + "consultation diagnosis, and prescribed medicines. "
+                        + "Ordered by most recent appointment first."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Patient history retrieved successfully",
+                    content      = @Content(schema = @Schema(implementation = PatientHistoryResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description  = "Patient not found or already deleted",
+                    content      = @Content(schema = @Schema(hidden = true))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized — missing or invalid JWT token",
+                    content      = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    List<PatientHistoryResponseDto> getPatientHistory(
             @Parameter(description = "Patient UUID") @PathVariable UUID patientId,
             HttpServletRequest request);
 }

@@ -1,6 +1,7 @@
 package com.eyehospital.pms.module.appointment.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -90,4 +91,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID>,
     long countByHospitalIdAndAppointmentDateBetweenAndVisitTypeAndDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String visitType);
 
     long countByHospitalIdAndAppointmentDateBetweenAndStatusAndDeletedFalse(UUID hospitalId, LocalDate fromDate, LocalDate toDate, String status);
+
+    /**
+     * Retrieves all non-deleted appointments for a patient within a hospital,
+     * ordered by appointment date descending (most recent first).
+     *
+     * <p>The caller uses the returned entities' JPA relationships
+     * ({@code doctor}, {@code consultation → prescriptions → medicine})
+     * to build the patient history response.</p>
+     */
+    List<Appointment> findByPatientIdAndHospitalIdAndDeletedFalseOrderByAppointmentDateDescAppointmentTimeDesc(
+            UUID patientId, UUID hospitalId);
 }
